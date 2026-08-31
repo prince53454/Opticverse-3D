@@ -1,0 +1,2194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpticsVerse 3D — Sandbox Physics Lab</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#050510;font-family:'Orbitron','Inter',sans-serif;color:#e8eaff}
+canvas{display:block;position:absolute;top:0;left:0}
+/* ===== DEEP SPACE GALAXY BACKGROUND ===== */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse at 12% 20%,rgba(120,40,200,.12) 0%,transparent 40%),
+    radial-gradient(ellipse at 88% 12%,rgba(0,100,255,.10) 0%,transparent 35%),
+    radial-gradient(ellipse at 50% 90%,rgba(200,0,120,.08) 0%,transparent 35%),
+    radial-gradient(ellipse at 75% 55%,rgba(255,50,150,.06) 0%,transparent 28%),
+    radial-gradient(ellipse at 30% 60%,rgba(0,180,220,.08) 0%,transparent 30%),
+    radial-gradient(ellipse at 60% 30%,rgba(80,0,180,.10) 0%,transparent 25%);
+}
+/* Animated starfield overlay */
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.8;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%,rgba(255,255,255,.9),transparent),
+    radial-gradient(1px 1px at 25% 45%,rgba(200,220,255,.8),transparent),
+    radial-gradient(1.5px 1.5px at 40% 8%,rgba(255,255,255,.7),transparent),
+    radial-gradient(1px 1px at 55% 72%,rgba(180,200,255,.9),transparent),
+    radial-gradient(1px 1px at 70% 35%,rgba(255,255,255,.6),transparent),
+    radial-gradient(1.5px 1.5px at 85% 55%,rgba(200,180,255,.8),transparent),
+    radial-gradient(1px 1px at 15% 80%,rgba(255,255,255,.5),transparent),
+    radial-gradient(1px 1px at 92% 75%,rgba(200,220,255,.7),transparent),
+    radial-gradient(1px 1px at 35% 30%,rgba(255,255,255,.4),transparent),
+    radial-gradient(1.5px 1.5px at 60% 50%,rgba(220,200,255,.6),transparent),
+    radial-gradient(1px 1px at 5% 60%,rgba(255,255,255,.8),transparent),
+    radial-gradient(1px 1px at 48% 92%,rgba(200,220,255,.7),transparent),
+    radial-gradient(1px 1px at 78% 8%,rgba(255,255,255,.9),transparent),
+    radial-gradient(1px 1px at 95% 42%,rgba(180,200,255,.6),transparent),
+    radial-gradient(1.5px 1.5px at 20% 95%,rgba(200,180,255,.8),transparent),
+    radial-gradient(1px 1px at 65% 18%,rgba(255,255,255,.5),transparent),
+    radial-gradient(1px 1px at 42% 65%,rgba(200,220,255,.7),transparent),
+    radial-gradient(1px 1px at 88% 88%,rgba(255,255,255,.6),transparent),
+    radial-gradient(1px 1px at 3% 38%,rgba(200,180,255,.5),transparent),
+    radial-gradient(1.5px 1.5px at 52% 4%,rgba(255,255,255,.8),transparent);
+  animation:twinkle 4s ease-in-out infinite alternate;
+}
+@keyframes twinkle{0%{opacity:.7}50%{opacity:1}100%{opacity:.75}}
+#loader{position:fixed;inset:0;z-index:9999;background:radial-gradient(ellipse at 50% 40%,#0c0528,#050510);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s}
+#loader.done{opacity:0;pointer-events:none}
+#loader .logo{font-family:'Orbitron',monospace;font-size:2.8rem;font-weight:900;background:linear-gradient(135deg,#00d4ff,#8b5cf6,#ec4899,#ff00aa,#00ff88,#ffaa00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:3px;filter:drop-shadow(0 0 25px rgba(0,180,255,.5));animation:cosmicPulse 3s ease-in-out infinite}
+#loader .sub{color:rgba(0,212,255,.6);font-size:.75rem;letter-spacing:8px;text-transform:uppercase;margin-bottom:2rem;font-family:'Orbitron',monospace}
+.ld-bar{width:300px;height:4px;background:rgba(0,180,255,.08);border-radius:2px;overflow:hidden;border:1px solid rgba(0,180,255,.2)}
+.ld-fill{height:100%;width:0%;background:linear-gradient(90deg,#00d4ff,#8b5cf6,#ec4899,#ff00aa,#00ff88);transition:width .3s;box-shadow:0 0 15px rgba(0,180,255,.6)}
+@keyframes cosmicPulse{0%,100%{filter:drop-shadow(0 0 25px rgba(0,180,255,.5))}50%{filter:drop-shadow(0 0 50px rgba(139,92,246,.7))}}
+
+#toolbar{position:fixed;top:58px;left:0;width:84px;height:calc(100% - 110px);z-index:200;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;background:linear-gradient(180deg,rgba(8,4,28,.94),rgba(4,2,18,.94));border-right:2px solid rgba(0,180,255,.2);backdrop-filter:blur(20px);overflow-y:auto;scrollbar-width:none;box-shadow:4px 0 30px rgba(0,0,0,.6),inset -1px 0 0 rgba(139,92,246,.08)}
+#toolbar::-webkit-scrollbar{display:none}
+.tb{width:64px;min-width:64px;height:60px;border-radius:6px;border:2px solid rgba(0,180,255,.15);background:linear-gradient(165deg,rgba(15,8,40,.92),rgba(10,5,28,.92),rgba(8,4,22,.92));display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;box-shadow:inset 0 1px 0 rgba(0,180,255,.08),inset 0 -1px 0 rgba(0,0,0,.4),0 3px 12px rgba(0,0,0,.5)}
+.tb::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent)}
+.tb::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.5),transparent)}
+.tb .ic{font-size:1.35rem;line-height:1;filter:drop-shadow(0 0 5px rgba(0,180,255,.3))}
+.tb .lb{font-size:.48rem;color:rgba(120,140,200,.7);margin-top:2px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;font-family:'Orbitron',monospace}
+.tb:hover{background:linear-gradient(165deg,rgba(20,10,50,.95),rgba(15,8,38,.95));border-color:rgba(0,180,255,.5);transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(0,180,255,.12),0 4px 15px rgba(0,180,255,.15),0 0 20px rgba(139,92,246,.1)}
+.tb:hover .ic{filter:drop-shadow(0 0 10px rgba(0,180,255,.6))}
+.tb:hover .lb{color:#00d4ff}
+.tb.active{background:linear-gradient(165deg,rgba(0,180,255,.2),rgba(139,92,246,.12),rgba(0,120,200,.18));border-color:#00d4ff;box-shadow:inset 0 0 20px rgba(0,180,255,.12),0 0 25px rgba(0,180,255,.25),0 4px 18px rgba(139,92,246,.2),inset 0 1px 0 rgba(0,180,255,.15);animation:cosmicGlow 2s ease-in-out infinite alternate}
+.tb.active .ic{filter:drop-shadow(0 0 12px rgba(0,180,255,.8))}
+.tb.active .lb{color:#00d4ff;text-shadow:0 0 10px rgba(0,180,255,.6)}
+@keyframes cosmicGlow{from{box-shadow:inset 0 0 20px rgba(0,180,255,.12),0 0 25px rgba(0,180,255,.25),0 4px 18px rgba(139,92,246,.2)}to{box-shadow:inset 0 0 28px rgba(139,92,246,.15),0 0 35px rgba(0,180,255,.35),0 4px 22px rgba(236,72,153,.2)}}
+.tsep{width:48px;height:2px;background:linear-gradient(90deg,transparent,rgba(0,180,255,.25),rgba(139,92,246,.3),rgba(236,72,153,.25),transparent);margin:4px 0;position:relative}
+.tsep::before{content:'';position:absolute;top:-1px;left:50%;transform:translateX(-50%);width:6px;height:4px;background:rgba(0,180,255,.5);clip-path:polygon(0 0,100% 50%,0 100%)}
+
+#topbar{position:fixed;top:0;left:0;right:0;height:58px;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 90px;background:linear-gradient(180deg,rgba(8,4,30,.96),rgba(5,2,20,.96));border-bottom:2px solid rgba(0,180,255,.2);backdrop-filter:blur(15px);box-shadow:0 4px 25px rgba(0,0,0,.6),inset 0 -1px 0 rgba(139,92,246,.08)}
+.tb-brand{font-family:'Orbitron',monospace;font-size:.9rem;font-weight:900;background:linear-gradient(135deg,#00d4ff,#8b5cf6,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:2px;filter:drop-shadow(0 0 10px rgba(0,180,255,.4));display:flex;align-items:center;gap:6px}
+.tb-mid{display:flex;gap:6px}
+.tb-btn{padding:7px 14px;border-radius:4px;font-size:.72rem;font-weight:700;cursor:pointer;border:2px solid rgba(0,180,255,.18);background:linear-gradient(165deg,rgba(15,8,40,.9),rgba(10,5,28,.9));color:rgba(140,160,220,.8);transition:all .2s;font-family:'Orbitron',monospace;letter-spacing:.5px;text-transform:uppercase;position:relative;overflow:hidden}
+.tb-btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);transition:left .4s}
+.tb-btn:hover::before{left:100%}
+.tb-btn:hover{border-color:#00d4ff;color:#00d4ff;box-shadow:0 0 18px rgba(0,180,255,.2),inset 0 0 10px rgba(0,180,255,.06);transform:translateY(-1px)}
+.tb-btn.active{background:linear-gradient(165deg,rgba(139,92,246,.2),rgba(0,180,255,.12));border-color:#8b5cf6;color:#8b5cf6;box-shadow:0 0 22px rgba(139,92,246,.3),inset 0 0 10px rgba(139,92,246,.08);text-shadow:0 0 8px rgba(139,92,246,.4)}
+.tb-btn.warn{border-color:rgba(236,72,153,.3);color:#ec4899;background:linear-gradient(165deg,rgba(60,10,40,.6),rgba(40,5,30,.6))}
+.tb-btn.warn:hover{background:rgba(236,72,153,.15);border-color:#ec4899;box-shadow:0 0 18px rgba(236,72,153,.25)}
+.tb-right{display:flex;gap:8px;align-items:center}
+
+#props{position:fixed;top:66px;right:0;width:270px;max-height:calc(100% - 120px);z-index:200;background:linear-gradient(180deg,rgba(8,4,30,.95),rgba(5,2,22,.95));border-left:2px solid rgba(0,180,255,.2);backdrop-filter:blur(20px);border-radius:0 0 0 12px;padding:1rem;display:flex;flex-direction:column;gap:.8rem;overflow-y:auto;transform:translateX(100%);transition:transform .3s;box-shadow:-4px 0 25px rgba(0,0,0,.6)}
+#props.open{transform:translateX(0);animation:panelSlide .3s ease}
+@keyframes panelSlide{from{transform:translateX(100%)}to{transform:translateX(0)}}
+#props h3{font-family:'Orbitron',monospace;font-size:.72rem;background:linear-gradient(135deg,#00d4ff,#8b5cf6,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-transform:uppercase;letter-spacing:2px;padding-bottom:6px;border-bottom:2px solid rgba(0,180,255,.2);margin-bottom:4px}
+.pr{display:flex;justify-content:space-between;align-items:center;font-size:.78rem}
+.pr label{color:rgba(120,140,200,.7);font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:.5px;text-transform:uppercase}
+.pr .v{font-family:'JetBrains Mono',monospace;color:#00d4ff;font-size:.78rem;text-shadow:0 0 8px rgba(0,180,255,.3)}
+.ps{width:100%;margin-top:4px}
+.ps input[type=range]{width:100%;-webkit-appearance:none;height:6px;border-radius:3px;background:linear-gradient(90deg,rgba(0,180,255,.3),rgba(139,92,246,.3),rgba(236,72,153,.3));outline:none;cursor:pointer;border:1px solid rgba(0,180,255,.1)}
+.ps input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:3px;background:linear-gradient(135deg,#00d4ff,#8b5cf6);box-shadow:0 0 12px rgba(0,180,255,.5),inset 0 1px 0 rgba(255,255,255,.3);cursor:pointer;border:2px solid rgba(0,0,0,.5);transform:rotate(45deg)}
+.pa{display:flex;gap:6px;margin-top:.5rem}
+.pab{flex:1;padding:7px;border-radius:4px;font-size:.7rem;font-weight:700;cursor:pointer;border:2px solid rgba(0,180,255,.18);background:linear-gradient(165deg,rgba(15,8,40,.9),rgba(10,5,28,.9));color:rgba(140,160,220,.8);transition:all .2s;font-family:'Orbitron',monospace;text-align:center;text-transform:uppercase;letter-spacing:.5px}
+.pab:hover{border-color:#00d4ff;color:#00d4ff;box-shadow:0 0 15px rgba(0,180,255,.2);transform:translateY(-1px)}
+.pab.del{border-color:rgba(236,72,153,.3);color:#ec4899;background:linear-gradient(165deg,rgba(60,10,40,.6),rgba(40,5,30,.6))}
+.pab.del:hover{border-color:#ec4899;box-shadow:0 0 15px rgba(236,72,153,.25)}
+
+#presetPanel{position:fixed;top:64px;left:84px;z-index:250;background:linear-gradient(180deg,rgba(8,4,30,.96),rgba(5,2,22,.96));border:2px solid rgba(0,180,255,.2);border-radius:0 0 12px 0;padding:1.2rem;width:310px;display:none;backdrop-filter:blur(20px);max-height:80vh;overflow-y:auto;box-shadow:0 8px 35px rgba(0,0,0,.6)}
+#presetPanel.show{display:block;animation:fs .3s ease}
+@keyframes fs{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+#presetPanel h3{font-family:'Orbitron',monospace;font-size:.75rem;background:linear-gradient(135deg,#00d4ff,#8b5cf6,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.8rem;text-transform:uppercase;letter-spacing:2px}
+.pc{padding:.8rem;border:2px solid rgba(0,180,255,.15);border-radius:6px;cursor:pointer;transition:all .2s;margin-bottom:.5rem;background:linear-gradient(165deg,rgba(12,6,35,.5),rgba(8,4,25,.5))}
+.pc:hover{border-color:#8b5cf6;background:linear-gradient(165deg,rgba(20,10,50,.6),rgba(15,8,38,.5));box-shadow:0 0 18px rgba(139,92,246,.15);transform:translateX(3px)}
+.pc h4{font-size:.82rem;margin-bottom:.2rem;font-family:'Orbitron',monospace;color:#e8eaff}
+.pc p{font-size:.7rem;color:rgba(120,140,200,.7);font-family:'Orbitron',monospace}
+
+#bottombar{position:fixed;bottom:0;left:84px;right:0;height:50px;z-index:200;display:flex;align-items:center;justify-content:center;gap:12px;background:linear-gradient(180deg,rgba(5,2,20,.96),rgba(8,4,30,.96));border-top:2px solid rgba(139,92,246,.18);backdrop-filter:blur(15px);box-shadow:0 -4px 25px rgba(0,0,0,.5)}
+.bh{font-size:.72rem;color:rgba(120,140,200,.6);font-family:'Orbitron',monospace;letter-spacing:.5px;text-shadow:0 0 8px rgba(0,180,255,.15)}
+
+.toast{position:fixed;top:68px;left:50%;transform:translateX(-50%) translateY(-15px);padding:.7rem 1.4rem;background:linear-gradient(165deg,rgba(8,4,30,.96),rgba(5,2,22,.96));border:2px solid rgba(0,180,255,.35);border-radius:6px;font-size:.78rem;font-family:'Orbitron',monospace;z-index:500;opacity:0;transition:all .3s;backdrop-filter:blur(15px);pointer-events:none;white-space:nowrap;color:#00d4ff;text-shadow:0 0 8px rgba(0,180,255,.3);box-shadow:0 4px 25px rgba(0,0,0,.6),0 0 18px rgba(0,180,255,.12)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+#ctxMenu{position:fixed;z-index:600;background:linear-gradient(180deg,rgba(8,4,30,.96),rgba(5,2,22,.96));border:2px solid rgba(139,92,246,.3);border-radius:6px;padding:6px;min-width:170px;display:none;backdrop-filter:blur(20px);box-shadow:0 8px 35px rgba(0,0,0,.7),0 0 18px rgba(139,92,246,.12)}
+#ctxMenu.show{display:block;animation:ctxPop .15s ease}
+@keyframes ctxPop{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.ci{padding:8px 14px;border-radius:4px;font-size:.75rem;font-family:'Orbitron',monospace;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;color:rgba(180,180,230,.9);letter-spacing:.3px;text-transform:uppercase}
+.ci:hover{background:linear-gradient(165deg,rgba(0,180,255,.12),rgba(139,92,246,.08));color:#00d4ff;border-left:3px solid #00d4ff}
+.ci.dng{color:#ec4899}
+.ci.dng:hover{background:linear-gradient(165deg,rgba(236,72,153,.12),rgba(200,30,30,.08));color:#ec4899;border-left:3px solid #ec4899}
+.csep{height:2px;background:linear-gradient(90deg,transparent,rgba(139,92,246,.3),transparent);margin:4px 8px}
+#certificateCard{display:none}
+#studyPanel .study-tabs{position:sticky;top:-1.5rem;z-index:2;padding:.7rem 0;background:linear-gradient(180deg,rgba(16,18,48,.99),rgba(16,18,48,.9),transparent)}
+.study-tabs{display:flex;gap:.6rem;margin-bottom:1.2rem;flex-wrap:wrap}.study-tab{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#a9a9cf;border-radius:10px;padding:.6rem .9rem;cursor:pointer;font-weight:600}.study-tab:hover,.study-tab.active{border-color:#00d4ff;background:rgba(0,212,255,.12);color:#dffaff}.notes-library{display:none}.notes-library.show{display:block;animation:fadeInUp .3s}.notes-intro{padding:1rem 1.2rem;margin-bottom:1rem;border-radius:14px;background:linear-gradient(100deg,rgba(245,158,11,.12),rgba(236,72,153,.1));border:1px solid rgba(245,158,11,.24);color:#f5e6bd;line-height:1.5;font-size:.85rem}.notes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}.complete-note{padding:1.2rem;border:1px solid color-mix(in srgb,var(--note-color) 40%,transparent);border-radius:16px;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.025));box-shadow:inset 0 1px rgba(255,255,255,.06)}.complete-note h3{color:var(--note-color);margin-bottom:.7rem}.complete-note h4{color:#84eaff;font-size:.78rem;margin:1rem 0 .25rem;text-transform:uppercase;letter-spacing:.8px}.complete-note p{color:#c7c7e2;line-height:1.65;font-size:.83rem}.memory-pill{display:inline-block;margin-top:.9rem;padding:.45rem .65rem;border-radius:9px;background:rgba(255,255,255,.06);color:#fff;font-size:.76rem}.checklist{margin-top:1rem;padding:1rem;border-radius:14px;border:1px dashed rgba(0,212,255,.3);background:rgba(0,212,255,.04)}.checklist h3{font-size:.9rem;margin-bottom:.6rem}.checklist label{display:block;color:#b9b9d5;font-size:.8rem;margin:.45rem 0;cursor:pointer}.checklist input{accent-color:#00d4ff;margin-right:.45rem}@media(max-width:700px){.notes-grid{grid-template-columns:1fr}}
+
+#studyPanel{position:fixed;inset:70px 5% 62px;z-index:300;display:none;overflow:auto;padding:1.5rem;border:1px solid rgba(0,212,255,.25);border-radius:24px;background:linear-gradient(145deg,rgba(16,18,48,.98),rgba(5,7,22,.98));box-shadow:0 20px 80px rgba(0,0,0,.6),0 0 35px rgba(0,212,255,.15)}
+#studyPanel.show{display:block;animation:fs .35s ease}.study-top{display:flex;justify-content:space-between;gap:1rem;margin-bottom:1.4rem}.study-top h2{font-family:'Orbitron',monospace;font-size:1.25rem}.study-top p,.chapter-card p,.study-feedback,.certificate-copy{color:#9b9bc5;font-size:.82rem;line-height:1.5;margin-top:.35rem}.study-close,.study-btn{border:1px solid rgba(0,212,255,.3);background:rgba(0,212,255,.1);color:#dffaff;border-radius:10px;padding:.55rem .8rem;cursor:pointer}.study-progress{display:flex;align-items:center;gap:1rem;padding:.8rem 1rem;margin-bottom:1.3rem;border:1px solid rgba(139,92,246,.25);border-radius:14px;background:rgba(139,92,246,.08)}.study-progress-bar{height:8px;flex:1;background:rgba(255,255,255,.1);border-radius:8px;overflow:hidden}.study-progress-fill{height:100%;width:0;background:linear-gradient(90deg,#00d4ff,#8b5cf6,#ec4899);transition:width .5s}.study-progress span{font-family:'JetBrains Mono',monospace;font-size:.75rem;white-space:nowrap}.chapter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}.chapter-card{padding:1.15rem;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.025));cursor:pointer;transition:.25s;position:relative;overflow:hidden}.chapter-card:before{content:'';position:absolute;inset:0 0 auto;height:3px;background:var(--chapter-color,#00d4ff)}.chapter-card:hover{transform:translateY(-4px);border-color:var(--chapter-color,#00d4ff);box-shadow:0 0 22px rgba(0,212,255,.14)}.chapter-icon{font-size:2rem}.chapter-card h3{font-size:.95rem;margin:.55rem 0}.chapter-status{display:flex;justify-content:space-between;margin-top:.8rem;color:#7777a8;font-size:.7rem}.chapter-card.done .chapter-status{color:#55e3ad}.chapter-stars{color:#f59e0b}.chapter-view{display:none}.chapter-view.show{display:block;animation:fadeInUp .3s}.back-study{background:none;border:0;color:#00d4ff;cursor:pointer;margin-bottom:1rem}.notes-box{padding:1.4rem;border-radius:16px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.18);color:#d0d0e8;line-height:1.7;font-size:.88rem}.notes-box h3{color:#fff}.notes-box h4{color:#7eeaff;margin:1rem 0 .2rem}.fun-fact{margin-top:1rem;padding:.8rem 1rem;border-left:3px solid #f59e0b;background:rgba(245,158,11,.08);color:#ffd98a}.study-quiz{margin-top:1rem;padding:1.2rem;border-radius:16px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25)}.study-quiz h3{margin-bottom:.8rem}.study-quiz-option{display:block;width:100%;text-align:left;padding:.7rem;margin:.45rem 0;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#e4e4ff;border-radius:10px;cursor:pointer}.study-quiz-option:hover{border-color:#00d4ff}.study-quiz-option.correct{border-color:#10b981;background:rgba(16,185,129,.16)}.study-quiz-option.wrong{border-color:#ef4444;background:rgba(239,68,68,.15)}.study-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem}#certificateCard{position:fixed;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:min(650px,90vw);z-index:410;padding:2rem;text-align:center;border:2px solid rgba(0,212,255,.4);border-radius:22px;background:radial-gradient(circle at 50% 0,rgba(0,212,255,.2),transparent 45%),#101233;box-shadow:0 0 80px rgba(0,212,255,.25)}.certificate-title{font-family:'Orbitron',monospace;color:#8eeeff;font-size:1.4rem}.certificate-name{font-size:1.5rem;color:#fff;margin:1rem 0;border-bottom:1px solid rgba(0,212,255,.4);padding-bottom:.5rem}.cert-input{width:min(300px,100%);padding:.7rem;border-radius:9px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.2);color:#fff;text-align:center;margin:1rem 0}.study-overlay{position:fixed;inset:0;background:rgba(0,0,12,.72);z-index:290;display:none}.study-overlay.show{display:block}@media(max-width:700px){#studyPanel{inset:64px 2% 55px;padding:1rem}.chapter-grid{grid-template-columns:1fr 1fr}.study-progress{gap:.5rem}.study-progress span{font-size:.65rem}}
+
+/* ===== STUDY EXPANSION: glossary, preset guide, experiments, certificate tiers, flipbook ===== */
+.study-tabs{gap:.5rem}
+.glossary-intro,.guide-intro{padding:1rem 1.2rem;margin-bottom:1rem;border-radius:14px;background:linear-gradient(100deg,rgba(0,212,255,.12),rgba(139,92,246,.1));border:1px solid rgba(0,212,255,.24);color:#dff3ff;line-height:1.5;font-size:.85rem}
+.section-heading{font-family:'Orbitron',monospace;font-size:.95rem;color:#fff;margin:1.6rem 0 .8rem;display:flex;align-items:center;gap:.5rem}
+.section-heading:first-child{margin-top:0}
+.glossary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.7rem;margin-bottom:.5rem}
+.glossary-item{padding:.85rem .95rem;border-radius:12px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);transition:.2s}
+.glossary-item:hover{border-color:#00d4ff;background:rgba(0,212,255,.06);transform:translateY(-2px)}
+.glossary-item .g-ic{font-size:1.3rem}
+.glossary-item h4{font-size:.85rem;margin:.35rem 0 .2rem;color:#8eeeff}
+.glossary-item p{font-size:.76rem;color:#a9a9cf;line-height:1.5}
+.preset-guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-bottom:1rem}
+.preset-guide-card{padding:1.1rem;border-radius:16px;border:1px solid color-mix(in srgb,var(--pg-color) 40%,transparent);background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.02))}
+.preset-guide-card h3{color:var(--pg-color);font-size:1rem;margin-bottom:.4rem}
+.preset-guide-card .pg-tag{display:inline-block;font-size:.64rem;letter-spacing:.5px;text-transform:uppercase;color:var(--pg-color);border:1px solid color-mix(in srgb,var(--pg-color) 55%,transparent);border-radius:20px;padding:.15rem .55rem;margin-bottom:.55rem}
+.preset-guide-card h5{font-size:.72rem;text-transform:uppercase;letter-spacing:.6px;color:#84eaff;margin:.7rem 0 .25rem}
+.preset-guide-card p,.preset-guide-card li{font-size:.8rem;color:#c7c7e2;line-height:1.55}
+.preset-guide-card ol{margin:.2rem 0 0 1.1rem}
+.load-btn{margin-top:.8rem;display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--pg-color);color:var(--pg-color);background:color-mix(in srgb,var(--pg-color) 12%,transparent);border-radius:10px;padding:.5rem .8rem;font-size:.78rem;font-weight:600;cursor:pointer;transition:.2s}
+.load-btn:hover{background:var(--pg-color);color:#04040d}
+.experiment-box{margin-top:1rem;padding:.9rem 1.1rem;border-left:3px solid #10b981;background:rgba(16,185,129,.08);border-radius:0 12px 12px 0}
+.experiment-box h4{color:#5eead4;font-size:.78rem;text-transform:uppercase;letter-spacing:.6px;margin-bottom:.4rem}
+.experiment-box ol{margin-left:1.1rem;color:#c7f5e6;font-size:.83rem;line-height:1.6}
+.definition-box{margin-top:.8rem;padding:.85rem 1rem;border-left:3px solid #00d4ff;background:rgba(0,212,255,.07);border-radius:0 12px 12px 0;font-size:.83rem;color:#d5f2ff;line-height:1.55}
+.definition-box strong{color:#8eeeff}
+/* quiz upgrades */
+.quiz-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem}
+.quiz-dots{display:flex;gap:5px}
+.quiz-dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2)}
+.quiz-dot.qd-done{background:#10b981;border-color:#10b981}
+.quiz-dot.qd-active{background:#00d4ff;border-color:#00d4ff;box-shadow:0 0 8px rgba(0,212,255,.6)}
+.quiz-streak{font-size:.72rem;color:#f59e0b;font-weight:600}
+.study-quiz-question{font-size:1rem;font-weight:600;margin:.6rem 0 .8rem;line-height:1.4}
+.study-quiz-option{position:relative;display:flex;align-items:center;gap:.5rem}
+.study-quiz-option .opt-letter{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:7px;background:rgba(255,255,255,.08);font-size:.7rem;font-weight:700;flex-shrink:0}
+.study-quiz-option.correct .opt-letter{background:#10b981;color:#04140d}
+.study-quiz-option.wrong .opt-letter{background:#ef4444;color:#1a0505}
+.hint-row{display:flex;justify-content:flex-end;margin-top:.3rem}
+.hint-btn{background:none;border:1px dashed rgba(245,158,11,.5);color:#f5b942;border-radius:8px;padding:.3rem .6rem;font-size:.7rem;cursor:pointer}
+.hint-btn:hover{background:rgba(245,158,11,.1)}
+.hint-text{font-size:.76rem;color:#ffd98a;margin-top:.4rem;padding:.5rem .7rem;border-radius:8px;background:rgba(245,158,11,.08);display:none}
+.hint-text.show{display:block;animation:fadeInUp .25s}
+.study-feedback.pop{animation:popFeedback .35s ease}
+@keyframes popFeedback{0%{transform:scale(.94);opacity:.5}100%{transform:scale(1);opacity:1}}
+.confetti-burst{position:fixed;inset:0;pointer-events:none;z-index:700;overflow:hidden}
+.confetti-piece{position:absolute;top:-20px;font-size:1.1rem;animation:confettiFall linear forwards}
+@keyframes confettiFall{to{transform:translateY(105vh) rotate(540deg);opacity:.2}}
+/* certificate tiers */
+#certificateCard{transition:box-shadow .3s,border-color .3s}
+#certificateCard.tier-platinum{border-color:rgba(224,224,255,.7);box-shadow:0 0 90px rgba(200,200,255,.35)}
+#certificateCard.tier-gold{border-color:rgba(245,197,66,.7);box-shadow:0 0 90px rgba(245,197,66,.3)}
+#certificateCard.tier-silver{border-color:rgba(192,200,214,.7);box-shadow:0 0 90px rgba(192,200,214,.28)}
+#certificateCard.tier-bronze{border-color:rgba(205,138,90,.7);box-shadow:0 0 90px rgba(205,138,90,.28)}
+#certificateCard.tier-apprentice{border-color:rgba(0,212,255,.4);box-shadow:0 0 80px rgba(0,212,255,.25)}
+.cert-badge{font-size:2.6rem;margin-bottom:.3rem;filter:drop-shadow(0 0 12px currentColor)}
+.cert-tier-name{font-family:'Orbitron',monospace;font-size:1.05rem;margin:.2rem 0 .6rem;letter-spacing:1px}
+.tier-platinum .cert-tier-name{color:#e6e6ff}
+.tier-gold .cert-tier-name{color:#f5c542}
+.tier-silver .cert-tier-name{color:#c0c8d6}
+.tier-bronze .cert-tier-name{color:#cd8a5a}
+.tier-apprentice .cert-tier-name{color:#8eeeff}
+.cert-score-bar{height:10px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden;margin:.9rem 0}
+.cert-score-fill{height:100%;background:linear-gradient(90deg,#00d4ff,#8b5cf6,#ec4899)}
+.cert-chapter-breakdown{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;margin-top:.7rem}
+.cert-chip{font-size:.66rem;padding:.25rem .55rem;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#c7c7e2}
+/* flipbook */
+.flipbook-wrap{display:none;text-align:center}
+.flipbook-wrap.show{display:block;animation:fadeInUp .3s}
+.flipbook{position:relative;max-width:620px;margin:0 auto;perspective:2200px}
+.flipbook-page{min-height:400px;text-align:left;padding:2rem 2.2rem;border-radius:18px;background:linear-gradient(155deg,#fdf6e3,#f3e8c9);color:#3a2c14;box-shadow:0 25px 60px rgba(0,0,0,.45),inset 0 0 0 1px rgba(0,0,0,.06);transform-origin:left center;backface-visibility:hidden}
+.flipbook-page.turning{animation:pageTurn .55s ease}
+@keyframes pageTurn{0%{transform:rotateY(0deg);}45%{transform:rotateY(-92deg);opacity:.55}55%{transform:rotateY(-92deg);opacity:.55}100%{transform:rotateY(0deg);}}
+.flipbook-page h2{font-family:'Orbitron',monospace;font-size:1.3rem;color:#5b3d0f;margin-bottom:.3rem}
+.flipbook-page h4{color:#8b5cf6;font-size:.8rem;text-transform:uppercase;letter-spacing:.6px;margin:.9rem 0 .25rem}
+.flipbook-page p,.flipbook-page li{font-size:.86rem;line-height:1.65;color:#4a3a1e}
+.flipbook-page .fp-page-num{position:absolute;bottom:14px;right:20px;font-size:.7rem;color:#8a7440;font-family:'JetBrains Mono',monospace}
+.flipbook-cover{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(circle at 50% 20%,#2a2a5c,#0c0c22);color:#fff}
+.flipbook-cover h2{font-size:1.8rem;background:linear-gradient(135deg,#00d4ff,#8b5cf6,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.flipbook-nav{display:flex;justify-content:center;align-items:center;gap:1rem;margin-top:1.1rem}
+.flipbook-nav button{border:1px solid rgba(0,212,255,.3);background:rgba(0,212,255,.1);color:#dffaff;border-radius:10px;padding:.55rem 1rem;cursor:pointer;font-weight:600}
+.flipbook-nav button:disabled{opacity:.35;cursor:default}
+.flipbook-page-indicator{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#9b9bc5}
+@media(max-width:700px){.flipbook-page{padding:1.3rem 1.4rem;min-height:340px}}
+
+/* ===== SPACE GALAXY DESIGN LAYER ===== */
+:root{--plasma:#00d4ff;--nebula:#8b5cf6;--nova:#ff00aa;--aurora:#00ff88;--solar:#ffaa00;--star:#ffffff;--cosmic:#ec4899;--void:#050510;--glass:rgba(10,8,30,.82);--glow:rgba(0,212,255,.12);--line:rgba(0,212,255,.15)}
+body{background:#020108}
+#main{filter:saturate(1.2) contrast(1.08) brightness(1.05)}
+@media(max-width:700px){#topbar{padding-left:12px}.tb-brand{font-size:.72rem}.tb-mid{display:none}#toolbar{width:64px}.tb{width:50px;min-width:50px;height:50px}.tb .ic{font-size:1.1rem}#bottombar{left:64px}.bh{font-size:.65rem;text-align:center}}
+@media(max-width:700px){#topbar{padding-left:12px}.tb-brand{font-size:.72rem}.tb-mid{display:none}#toolbar{width:64px}.tb{width:50px;min-width:50px;height:50px}.tb .ic{font-size:1.1rem}#bottombar{left:64px}.bh{font-size:.65rem;text-align:center}}
+</style>
+</head>
+<body>
+<canvas id="main"></canvas>
+<div id="loader"><div class="logo">OPTICSVERSE 3D</div><div class="sub">Sandbox Physics Lab</div><div class="ld-bar"><div class="ld-fill" id="ldFill"></div></div></div>
+<div id="toolbar"></div>
+<div id="topbar">
+  <div class="tb-brand">⚙️ OPTICSVERSE 3D</div>
+  <div class="tb-mid">
+    <button class="tb-btn active" id="modeSandbox" onclick="setMode('sandbox')">🧪 Sandbox</button>
+    <button class="tb-btn" onclick="toggleStudy()">📚 Study</button>
+    <button class="tb-btn" id="modePresets" onclick="togglePresets()">📋 Presets</button>
+  </div>
+  <div class="tb-right">
+    <button class="tb-btn" onclick="undoAction()">↩ Undo</button>
+    <button class="tb-btn warn" onclick="clearAll()">🗑 Clear</button>
+  </div>
+</div>
+<div id="props"></div>
+<div id="presetPanel"></div>
+<div id="bottombar"><span class="bh" id="hintText">Click a tool on the left, then click in the scene to place it • Drag to move • Right-click for options • Scroll to zoom</span></div>
+<div id="ctxMenu">
+  <div class="ci" onclick="duplicateSelected()">📋 Duplicate</div>
+  <div class="ci" onclick="rotateSelected(45)">🔄 Rotate +45°</div>
+  <div class="ci" onclick="rotateSelected(-45)">🔄 Rotate -45°</div>
+  <div class="csep"></div>
+  <div class="ci dng" onclick="deleteSelected()">🗑 Delete</div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="study-overlay" id="studyOverlay" onclick="closeStudy(event)"></div>
+<section id="studyPanel" aria-label="Optics Study Center">
+  <div class="study-top"><div><h2>📚 Optics Study Center</h2><p>Learn a little, try it in the lab, then earn your stars.</p></div><button class="study-close" onclick="toggleStudy()">✕</button></div>
+  <div class="study-progress"><span id="studyProgressText">0 / 5 chapters</span><div class="study-progress-bar"><div class="study-progress-fill" id="studyProgressFill"></div></div><span id="studyStars">⭐ 0</span><button class="study-btn" onclick="showCertificate()">🏆 Certificate</button></div>
+  <div class="study-tabs"><button class="study-tab active" id="chaptersTab" onclick="renderStudyHome()">🧩 Chapters & Tests</button><button class="study-tab" id="notesTab" onclick="showNotesLibrary()">📝 Complete Notes & Glossary</button><button class="study-tab" id="flipTab" onclick="showFlipBook()">📖 Flip Book</button></div>
+  <div id="chapterGrid" class="chapter-grid"></div>
+  <div id="chapterView" class="chapter-view"></div>
+  <div id="notesLibrary" class="notes-library"></div>
+  <div id="flipBookView" class="flipbook-wrap"></div>
+</section>
+<section id="certificateCard">
+  <div class="cert-badge" id="certBadge">🏆</div>
+  <div class="certificate-title">OPTICSVERSE ACHIEVEMENT</div>
+  <div class="cert-tier-name" id="certTierName">Optics Apprentice</div>
+  <input class="cert-input" id="certNameInput" placeholder="Type your name" maxlength="30" />
+  <div class="certificate-name" id="certificateName">Young Scientist</div>
+  <p class="certificate-copy" id="certificateCopy">has completed the Optics Explorer course, studied every chapter, and passed every chapter challenge.</p>
+  <p class="certificate-copy" id="certificateStats"></p>
+  <div class="cert-score-bar"><div class="cert-score-fill" id="certScoreFill" style="width:0%"></div></div>
+  <div class="cert-chapter-breakdown" id="certBreakdown"></div>
+  <div class="study-actions"><button class="study-btn" onclick="printCertificate()">🖨 Print Certificate</button><button class="study-btn" onclick="closeCertificate()">Close</button></div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/three@0.128.0/build/three.min.js'"></script>
+<script>
+// =============================================
+//  OPTICSVERSE 3D — SANDBOX PHYSICS LAB
+// =============================================
+const ST = {
+  scene:null, camera:null, renderer:null, clock:null,
+  raycaster:new THREE.Raycaster(),
+  mouse:new THREE.Vector2(),
+  plane:new THREE.Plane(new THREE.Vector3(0,0,1),0),
+  elements:[], rays:[], lights:[], presetObjs:[],
+  selectedTool:null, selectedEl:null,
+  isDragging:false, dragOffset:new THREE.Vector3(),
+  isRotating:false, rotateStartX:0, rotateStartAngle:0,
+  cameraAngle:0, cameraHeight:8, cameraDist:18,
+  isRightDrag:false, lastMouse:{x:0,y:0},
+  undoStack:[], elementId:0
+};
+
+const TOOLS=[
+  {id:'light',ic:'💡',lbl:'Light',type:'light'},
+  {sep:true},
+  {id:'plane_m',ic:'🪞',lbl:'Plane',type:'mirror',sub:'plane'},
+  {id:'concave_m',ic:'🔮',lbl:'Concave',type:'mirror',sub:'concave'},
+  {id:'convex_m',ic:'🪞',lbl:'Convex',type:'mirror',sub:'convex'},
+  {sep:true},
+  {id:'convex_l',ic:'🔍',lbl:'Convex',type:'lens',sub:'convex'},
+  {id:'concave_l',ic:'🔎',lbl:'Concave',type:'lens',sub:'concave'},
+  {sep:true},
+  {id:'water',ic:'🌊',lbl:'Water',type:'water'},
+  {id:'block',ic:'🧊',lbl:'Glass',type:'block'}
+];
+
+// ===== PRESETS (self-contained scene builders) =====
+const PRESETS = [
+  {
+    name:'🏦 Periscope', desc:'Two plane mirrors at 45° redirect light around a corner',
+    build: function(){
+      addPresetLight(-8,6,0,12,0xffffff);
+      addPresetMirror(-4,4,0,45,'plane');
+      addPresetMirror(4,4,0,-45,'plane');
+      addPresetRay([[-8,6],[-4,4]],0xffff00);
+      addPresetRay([[-4,4],[4,4]],0xffff00);
+      addPresetRay([[4,4],[8,2]],0xffff00);
+      addLabel(-4,5.5,0,'Mirror at 45°',0x00d4ff);
+      addLabel(4,5.5,0,'Mirror at -45°',0x00d4ff);
+    }
+  },
+  {
+    name:'🔬 Telescope', desc:'Concave objective + convex eyepiece for distant viewing',
+    build: function(){
+      addPresetLight(-10,4,0,8,0xffffff);
+      addPresetConcaveMirror(-3,4,0);
+      addPresetConvexLens(5,4,0);
+      addPresetRay([[-10,4],[-3,4]],0xffffff);
+      addPresetRay([[-3,4],[5,4]],0xffff00);
+      addPresetRay([[5,4],[12,4]],0x00ff88);
+      addLabel(-3,6,0,'Concave Mirror',0xf59e0b);
+      addLabel(5,6,0,'Convex Lens',0x00d4ff);
+    }
+  },
+  {
+    name:"🌈 Newton's Prism", desc:'White light enters and splits into 7 colors (rainbow)',
+    build: function(){
+      addPresetLight(-7,3,0,6,0xffffff);
+      addPresetPrism(1,3,0);
+      // Draw a small rainbow spread through the glass, then a larger fan
+      // after the rays leave the prism. Red deviates least; violet most.
+      var colors=[0xff0000,0xff6600,0xffcc00,0x00ff00,0x00ccff,0x0066ff,0x9933ff];
+      colors.forEach(function(c,i){
+        var insideOffset=(i-3)*0.045;
+        var insideEntry=[0.08,3+insideOffset];
+        var insideExit=[1.92,3+insideOffset*1.5];
+        addPresetBeam(insideEntry[0],insideEntry[1],insideExit[0],insideExit[1],c);
+        var a=-0.12-(i*0.035);
+        var ex=14, ey=insideExit[1]+Math.tan(a)*12;
+        addPresetRay([insideExit,[ex,ey]],c);
+        addPresetDot(ex,ey,0,c);
+      });
+      addPresetBeam(-7,3,0.08,3,0xffffff);
+      addLabel(1,5.5,0,'Glass Prism',0x00d4ff);
+      addLabel(-7,5,0,'White Light',0xffffff);
+      addLabel(12,5.5,0,'🌈 Rainbow (VIBGYOR)',0xffffff);
+    }
+  },
+  {
+    name:'🌊 Apparent Depth', desc:'Light bends when entering water — objects appear shallower',
+    build: function(){
+      addPresetLight(-6,6,0,8,0xff4444);
+      addPresetWater(0,2,0);
+      addPresetRay([[-6,6],[0,2]],0xff4444);
+      addPresetRay([[0,2],[4,-1]],0x00ff88);
+      addPresetRay([[0,2],[6,6]],0xffff00);
+      addLabel(0,4.5,0,'Water Surface (n=1.33)',0x00aaff);
+      addLabel(-6,7.5,0,'Incident Ray',0xff4444);
+      addLabel(5,7.5,0,'Reflected',0xffff00);
+      addLabel(5,0,0,'Refracted',0x00ff88);
+    }
+  },
+  {
+    name:'🔍 Magnifying Glass', desc:'Convex lens magnifies an object placed within focal length',
+    build: function(){
+      addPresetLight(-5,3,0,5,0xffff00);
+      addPresetConvexLens(0,3,0);
+      addPresetRay([[-5,3],[0,3]],0xffff00);
+      addPresetRay([[-5,3],[0,3.5]],0xffff00);
+      addPresetRay([[-5,2.5],[0,2.5]],0xffff00);
+      addPresetRay([[0,3.5],[8,5]],0x00ff88);
+      addPresetRay([[0,2.5],[8,1.5]],0x00ff88);
+      addLabel(0,5.5,0,'Convex Lens (f=3)',0x00d4ff);
+      addLabel(-5,4.5,0,'Object',0xffff00);
+    }
+  },
+  {
+    name:'💡 Flashlight Reflector', desc:'Concave mirror focuses light into a beam (like a flashlight)',
+    build: function(){
+      addPresetLight(-1,3,0,3,0xffff00);
+      addPresetConcaveMirror(5,3,0);
+      addPresetRay([[-1,3],[5,3]],0xffff00);
+      addPresetRay([[-1,3.5],[5,3.5]],0xffff00);
+      addPresetRay([[-1,2.5],[5,2.5]],0xffff00);
+      addPresetRay([[5,3],[12,3]],0x00ff88);
+      addPresetRay([[5,3.5],[12,3.2]],0x00ff88);
+      addPresetRay([[5,2.5],[12,2.8]],0x00ff88);
+      addLabel(5,5.5,0,'Concave Mirror',0xf59e0b);
+      addLabel(-1,4.5,0,'Light Source',0xffff00);
+      addLabel(10,4.5,0,'Focused Beam',0x00ff88);
+    }
+  }
+];
+
+// ===== PRESET BUILDERS =====
+function clearPresetObjs(){
+  ST.presetObjs.forEach(function(o){ST.scene.remove(o)});
+  ST.presetObjs=[];
+}
+
+function addPresetObj(obj){
+  ST.scene.add(obj);
+  ST.presetObjs.push(obj);
+  return obj;
+}
+
+function addPresetLight(x,y,z,len,color){
+  var g=new THREE.Group();
+  // Cosmic plasma core
+  var coreGeo=new THREE.DodecahedronGeometry(0.5,0);
+  var coreMat=new THREE.MeshPhysicalMaterial({color:0x00d4ff,metalness:0.9,roughness:0.1,emissive:0x8b5cf6,emissiveIntensity:0.7,clearcoat:1});
+  var core=new THREE.Mesh(coreGeo,coreMat);core.rotation.x=Math.PI/4;g.add(core);
+  // Cosmic cage
+  var cageMat2=new THREE.MeshPhysicalMaterial({color:0x1a1040,metalness:0.95,roughness:0.15,emissive:color,emissiveIntensity:0.2});
+  var cageG=new THREE.TorusGeometry(0.65,0.05,8,6);
+  var cage=new THREE.Mesh(cageG,cageMat2);g.add(cage);
+  var cage2=new THREE.Mesh(cageG,cageMat2.clone());cage2.rotation.x=Math.PI/2;g.add(cage2);
+  // Glow
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(0.85,16,16),new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:0.12})));
+  g.add(new THREE.PointLight(color,2,30));
+  g.position.set(x,y,z);
+  addPresetObj(g);
+  // Beam line
+  var pts=[new THREE.Vector3(x,y,z),new THREE.Vector3(x+len,y,z)];
+  var line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:color,transparent:true,opacity:0.6}));
+  addPresetObj(line);
+  // Arrow
+  var arrow=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.3,8),new THREE.MeshBasicMaterial({color:color}));
+  arrow.position.set(x+len,y,z);
+  arrow.rotation.z=-Math.PI/2;
+  addPresetObj(arrow);
+}
+
+function addPresetBeam(x1,y1,x2,y2,color){
+  var pts=[new THREE.Vector3(x1,y1,0.01),new THREE.Vector3(x2,y2,0.01)];
+  addPresetObj(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:color,transparent:true,opacity:0.8})));
+}
+
+function addPresetRay(points,color){
+  var pts=points.map(function(p){return new THREE.Vector3(p[0],p[1],0.05)});
+  if(pts.length<2)return;
+  var line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:color,transparent:true,opacity:0.9}));
+  addPresetObj(line);
+  // Arrow at end
+  var last=pts[pts.length-1], prev=pts[pts.length-2];
+  var dir=new THREE.Vector3().subVectors(last,prev).normalize();
+  var arrow=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.28,6),new THREE.MeshBasicMaterial({color:color}));
+  arrow.position.copy(last);
+  arrow.rotation.z=-Math.atan2(dir.y,dir.x)-Math.PI/2;
+  addPresetObj(arrow);
+}
+
+function addPresetDot(x,y,z,color){
+  var dot=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,8),new THREE.MeshBasicMaterial({color:color}));
+  dot.position.set(x,y,z);
+  addPresetObj(dot);
+}
+
+function addPresetMirror(x,y,z,angle,sub){
+  var h=3;
+  var pts=[];
+    if(sub==='concave'||sub==='convex'){
+      var R=h*0.55;
+      for(var i=0;i<=30;i++){var angle=(i/30)*Math.PI-Math.PI/2;
+        var sy=R*Math.sin(angle);
+        var sx=(sub==='concave'?1:-1)*R*(1-Math.cos(angle));
+        pts.push(new THREE.Vector3(sx,sy,0));}
+    }else{
+      pts.push(new THREE.Vector3(0,-h/2,0),new THREE.Vector3(0,h/2,0));
+    }
+  // Filled mirror surface
+  if(sub==='concave'||sub==='convex'){
+    var mirrorR=h*0.55;
+    var cd2=mirrorR*0.4;
+    var pgeo=new THREE.SphereGeometry(mirrorR,48,48,0,Math.PI*2,0,Math.PI/2);
+    var pm=new THREE.Mesh(pgeo,new THREE.MeshPhysicalMaterial({color:0xe8f0ff,metalness:1.0,roughness:0.0,clearcoat:1,emissive:0x4080c0,emissiveIntensity:0.4,side:THREE.DoubleSide}));
+    pm.rotation.x=Math.PI/2;if(sub==='convex')pm.rotation.x=-Math.PI/2;pm.scale.z=cd2/mirrorR;
+    pm.position.set(x,y,z);pm.rotation.z=THREE.MathUtils.degToRad(angle);
+    addPresetObj(pm);
+  }
+  var mesh=new THREE.Mesh(
+    new THREE.TubeGeometry(curve,40,0.08,8,false),
+        new THREE.MeshPhysicalMaterial({color:0xc0e0ff,metalness:0.95,roughness:0.01,clearcoat:1,clearcoatRoughness:0.03,emissive:0x003060,emissiveIntensity:0.4})
+  );
+  mesh.position.set(x,y,z);
+  mesh.rotation.z=THREE.MathUtils.degToRad(angle);
+  addPresetObj(mesh);
+  // Plasma energy surface
+  var surf=new THREE.Mesh(
+    new THREE.TubeGeometry(curve,40,0.035,8,false),
+    new THREE.MeshBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.7})
+  );
+  surf.position.set(x,y,z);
+  surf.rotation.z=THREE.MathUtils.degToRad(angle);
+  addPresetObj(surf);
+  // Nebula accent strip
+  var accentPts=pts.map(function(p){return new THREE.Vector3(p.x+0.06,p.y,p.z)});
+  var accentCurve=new THREE.CatmullRomCurve3(accentPts);
+  var accent=new THREE.Mesh(
+    new THREE.TubeGeometry(accentCurve,40,0.02,8,false),
+    new THREE.MeshBasicMaterial({color:0x8b5cf6,transparent:true,opacity:0.4})
+  );
+  accent.position.set(x,y,z);
+  accent.rotation.z=THREE.MathUtils.degToRad(angle);
+  addPresetObj(accent);
+}
+
+function addPresetConcaveMirror(x,y,z){
+  var h=3.5;
+  var pts=[];
+  var R=h*0.55;
+  for(var i=0;i<=30;i++){var angle=(i/30)*Math.PI-Math.PI/2;
+    pts.push(new THREE.Vector3(R*(1-Math.cos(angle)),R*Math.sin(angle),0));}
+  var curve=new THREE.CatmullRomCurve3(pts);
+  // Filled concave mirror — solid glass dish
+  var cd3=R*0.4;
+  var cgeo=new THREE.SphereGeometry(R,48,48,0,Math.PI*2,0,Math.PI/2);
+  var cm=new THREE.Mesh(cgeo,new THREE.MeshPhysicalMaterial({color:0xe8f0ff,metalness:1.0,roughness:0.0,clearcoat:1,emissive:0x4080c0,emissiveIntensity:0.4,side:THREE.DoubleSide}));
+  cm.rotation.x=Math.PI/2;cm.scale.z=cd3/R;cm.position.set(x,y,z);addPresetObj(cm);
+  // Rim tube for frame
+  var mesh=new THREE.Mesh(
+    new THREE.TubeGeometry(curve,40,0.08,8,false),
+    new THREE.MeshPhysicalMaterial({color:0xc0e0ff,metalness:0.95,roughness:0.01,clearcoat:1,clearcoatRoughness:0.03,emissive:0x003060,emissiveIntensity:0.35})
+  );
+  mesh.position.set(x,y,z);
+  addPresetObj(mesh);
+  // Dark nebula back plate
+  var backPts=pts.map(function(p){return new THREE.Vector3(p.x+0.12,p.y,p.z)});
+  var backCurve=new THREE.CatmullRomCurve3(backPts);
+  addPresetObj(new THREE.Mesh(new THREE.TubeGeometry(backCurve,40,0.08,8,false),new THREE.MeshPhysicalMaterial({color:0x0c0520,metalness:0.9,roughness:0.2,emissive:0x050218,emissiveIntensity:0.25})));
+  // Plasma energy glow
+  var surfPts=pts.map(function(p){return new THREE.Vector3(p.x-0.06,p.y,p.z)});
+  var surfCurve=new THREE.CatmullRomCurve3(surfPts);
+  addPresetObj(new THREE.Mesh(new THREE.TubeGeometry(surfCurve,40,0.03,8,false),new THREE.MeshBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.7})));
+  // Focus marker — cosmic crosshair
+  var fDot=new THREE.Mesh(new THREE.OctahedronGeometry(0.2,0),new THREE.MeshPhysicalMaterial({color:0x00d4ff,metalness:0.7,roughness:0.15,emissive:0x8b5cf6,emissiveIntensity:0.6}));
+  fDot.position.set(x-3,y,0);addPresetObj(fDot);
+  var fglow=new THREE.Mesh(new THREE.SphereGeometry(0.3,16,16),new THREE.MeshBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.12}));
+  fglow.position.set(x-3,y,0);addPresetObj(fglow);
+}
+
+function addPresetConvexLens(x,y,z){
+  var h=3;
+  var shape=new THREE.Shape();
+  shape.moveTo(0,-h/2);shape.quadraticCurveTo(0.5,0,0,h/2);shape.quadraticCurveTo(-0.5,0,0,-h/2);
+  var geo=new THREE.ExtrudeGeometry(shape,{depth:0.15,bevelEnabled:false});   // Cosmic plasma lens
+   var mesh=new THREE.Mesh(geo,new THREE.MeshPhysicalMaterial({color:0xc0d0ff,transparent:true,opacity:0.35,roughness:0,transmission:0.65,ior:1.5,clearcoat:1,side:THREE.DoubleSide,emissive:0x00d4ff,emissiveIntensity:0.3,metalness:0.12}));
+  mesh.position.set(x,y,z);mesh.rotation.y=Math.PI/2;
+  addPresetObj(mesh);
+  // Purple chrome edge glow
+  addPresetObj(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x8b5cf6,transparent:true,opacity:0.7})).translateX(x).translateY(y).translateZ(z));
+  // Robotic housing ring
+  var ringGeo=new THREE.TorusGeometry(h*0.15,0.03,8,24);
+  var ringMat=new THREE.MeshPhysicalMaterial({color:0x1a1040,metalness:0.95,roughness:0.15,emissive:0x8b5cf6,emissiveIntensity:0.3});
+  var ring=new THREE.Mesh(ringGeo,ringMat);ring.position.set(x,y,z);ring.rotation.y=Math.PI/2;addPresetObj(ring);
+}
+
+function addPresetPrism(x,y,z){
+  var shape=new THREE.Shape();
+  shape.moveTo(-1.8,-1.2);shape.lineTo(1.8,-1.2);shape.lineTo(0,2);shape.closePath();
+  var geo=new THREE.ExtrudeGeometry(shape,{depth:1.8,bevelEnabled:false});// Cosmic energy prism
+   var mesh=new THREE.Mesh(geo,new THREE.MeshPhysicalMaterial({color:0xd0d8ff,transparent:true,opacity:0.28,roughness:0,side:THREE.DoubleSide,emissive:0x8b5cf6,emissiveIntensity:0.15,metalness:0.12,clearcoat:1}));
+  mesh.position.set(x,y,z-0.9);mesh.rotation.y=Math.PI/2;
+  addPresetObj(mesh);// Nebula frame edges
+   var edges=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x8b5cf6}));
+  edges.position.copy(mesh.position);edges.rotation.copy(mesh.rotation);
+  addPresetObj(edges);// Corner star points
+   var boltMat3=new THREE.MeshPhysicalMaterial({color:0x1a1040,metalness:0.95,roughness:0.15,emissive:0x8b5cf6,emissiveIntensity:0.2});
+  var prismVerts=[[-1.8,-1.2,0],[1.8,-1.2,0],[0,2,0],[-1.8,-1.2,1.8],[1.8,-1.2,1.8],[0,2,1.8]];
+  prismVerts.forEach(function(v){var b=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,8),boltMat3);b.position.set(v[0]+x,v[1]+y,v[2]+z-0.9);addPresetObj(b)});
+}
+
+function addPresetWater(x,y,z){
+  var geo=new THREE.PlaneGeometry(14,10,40,40);
+  // Robotic aquatic tank
+  var mesh=new THREE.Mesh(geo,new THREE.MeshPhysicalMaterial({color:0x00aaff,transparent:true,opacity:0.38,roughness:0.05,metalness:0.15,side:THREE.DoubleSide,emissive:0x004488,emissiveIntensity:0.2}));
+  mesh.rotation.x=-Math.PI/2;mesh.position.set(x,y,z);
+  mesh.userData.isWater=true;
+  addPresetObj(mesh);
+  // Cosmic frame
+  var hw=7,hh=5;
+  var edgePts=[new THREE.Vector3(-hw,y,-hh),new THREE.Vector3(hw,y,-hh),new THREE.Vector3(hw,y,hh),new THREE.Vector3(-hw,y,hh),new THREE.Vector3(-hw,y,-hh)];
+    addPresetObj(new THREE.Line(new THREE.BufferGeometry().setFromPoints(edgePts),new THREE.LineBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.65})));
+  // Star-point corner brackets
+  var bracketMat4=new THREE.MeshPhysicalMaterial({color:0x1a1040,metalness:0.95,roughness:0.15,emissive:0x00d4ff,emissiveIntensity:0.15});
+  [[-hw,hh],[hw,hh],[-hw,-hh],[hw,-hh]].forEach(function(p){
+    var bracket=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,0.1),bracketMat4);bracket.position.set(p[0],y,p[1]);addPresetObj(bracket);
+  });
+  // Plasma surface line
+  addPresetObj(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-hw,y+0.01,0.01),new THREE.Vector3(hw,y+0.01,0.01)]),new THREE.LineBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.5})));
+}
+
+function addLabel(x,y,z,text,color){
+  var canvas=document.createElement('canvas');
+  canvas.width=512;canvas.height=128;
+  var ctx=canvas.getContext('2d');
+  // Cosmic holographic panel
+  var grad=ctx.createLinearGradient(0,0,512,0);
+  grad.addColorStop(0,'rgba(10,5,30,0.9)');grad.addColorStop(0.5,'rgba(15,8,40,0.92)');grad.addColorStop(1,'rgba(10,5,30,0.9)');
+  ctx.fillStyle=grad;
+  ctx.roundRect(0,0,512,128,6);ctx.fill();
+  // Cosmic border
+  var r=(color>>16)&255,g=(color>>8)&255,b=color&255;
+  ctx.strokeStyle='rgba('+r+','+g+','+b+',0.5)';
+  ctx.lineWidth=2;ctx.roundRect(0,0,512,128,6);ctx.stroke();
+  // Top glow line
+  ctx.fillStyle='rgba('+r+','+g+','+b+',0.7)';
+  ctx.fillRect(6,0,500,2);
+  // Bottom glow line
+  ctx.fillStyle='rgba('+r+','+g+','+b+',0.3)';
+  ctx.fillRect(6,126,500,2);
+  // Corner star points
+  ctx.fillStyle='rgba(0,180,255,0.5)';
+  ctx.beginPath();ctx.arc(16,16,3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(496,16,3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(16,112,3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(496,112,3,0,Math.PI*2);ctx.fill();
+  ctx.font='bold 42px Orbitron, sans-serif';
+  ctx.fillStyle='#'+color.toString(16).padStart(6,'0');
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.shadowColor='#'+color.toString(16).padStart(6,'0');ctx.shadowBlur=10;
+  ctx.fillText(text,256,64);
+  ctx.shadowBlur=0;
+  var texture=new THREE.CanvasTexture(canvas);
+  var spriteMat=new THREE.SpriteMaterial({map:texture,transparent:true});
+  var sprite=new THREE.Sprite(spriteMat);
+  sprite.position.set(x,y,z);
+  sprite.scale.set(4,1,1);
+  addPresetObj(sprite);
+}
+
+// ===== INIT =====
+function init(){
+  ST.clock=new THREE.Clock();
+  ST.renderer=new THREE.WebGLRenderer({canvas:document.getElementById('main'),antialias:true});
+  ST.renderer.setSize(window.innerWidth,window.innerHeight);
+  ST.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  ST.renderer.shadowMap.enabled=true;
+  ST.renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  ST.renderer.toneMappingExposure=1.1;
+
+  ST.scene=new THREE.Scene();
+  ST.scene.background=new THREE.Color(0x020108);
+  ST.scene.fog=new THREE.FogExp2(0x020108,0.004);
+
+  ST.camera=new THREE.PerspectiveCamera(50,window.innerWidth/window.innerHeight,0.1,300);
+  updateCamera();
+
+  ST.scene.add(new THREE.AmbientLight(0x302060,0.8));
+  var dir=new THREE.DirectionalLight(0x8888cc,0.7);dir.position.set(10,15,10);dir.castShadow=true;ST.scene.add(dir);
+  // Cosmic nebula lighting
+  ST.scene.add(new THREE.PointLight(0x00d4ff,0.45,65).translateX(-5).translateY(8));
+  ST.scene.add(new THREE.PointLight(0x8b5cf6,0.45,65).translateX(5).translateY(8));
+  ST.scene.add(new THREE.PointLight(0xec4899,0.35,55).translateX(0).translateY(10));
+  ST.scene.add(new THREE.PointLight(0x00ff88,0.2,50).translateX(-8).translateY(5));
+  ST.scene.add(new THREE.PointLight(0xffaa00,0.15,45).translateX(8).translateY(5));
+
+  // === GALAXY STARFIELD ===
+  var starGeo=new THREE.BufferGeometry();var starVerts=[];
+  for(var si=0;si<5000;si++){starVerts.push((Math.random()-0.5)*300,(Math.random()-0.5)*300,(Math.random()-0.5)*300)}
+  starGeo.setAttribute('position',new THREE.Float32BufferAttribute(starVerts,3));
+  var starMat=new THREE.PointsMaterial({color:0xffffff,size:0.5,transparent:true,opacity:1.0});
+  var starField=new THREE.Points(starGeo,starMat);ST.scene.add(starField);
+  // === COLORED STARS — blue/purple/cyan ===
+  var star2Geo=new THREE.BufferGeometry();var star2Verts=[];
+  for(var si2=0;si2<1000;si2++){star2Verts.push((Math.random()-0.5)*200,(Math.random()-0.5)*200,(Math.random()-0.5)*200)}
+  star2Geo.setAttribute('position',new THREE.Float32BufferAttribute(star2Verts,3));
+  var starColors=[];for(var sc=0;sc<1000;sc++){var c=new THREE.Color().setHSL(Math.random()*0.25+0.55,0.8,0.75);starColors.push(c.r,c.g,c.b)}
+  star2Geo.setAttribute('color',new THREE.Float32BufferAttribute(starColors,3));
+  var colorStars=new THREE.Points(star2Geo,new THREE.PointsMaterial({size:0.6,transparent:true,opacity:0.9,vertexColors:true}));
+  ST.scene.add(colorStars);
+  // Cosmic grid — faint energy plane
+  var grid=new THREE.GridHelper(80,80,0x00d4ff,0x050520);
+  grid.position.y=-0.02;grid.material.opacity=0.15;grid.material.transparent=true;ST.scene.add(grid);
+  var grid2=new THREE.GridHelper(80,40,0x8b5cf6,0x050520);
+  grid2.position.y=-0.015;grid2.material.opacity=0.04;grid2.material.transparent=true;ST.scene.add(grid2);
+  var gnd=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.MeshStandardMaterial({color:0x050510,roughness:0.95}));
+  gnd.rotation.x=-Math.PI/2;gnd.position.y=-0.03;gnd.receiveShadow=true;  ST.scene.add(gnd);
+
+  // === NEBULA CLOUDS — large glowing gas clouds ===
+  function makeNebula(x,y,z,r,g,b,sz,op){
+    var geo=new THREE.SphereGeometry(sz,16,16);
+    var mat=new THREE.MeshBasicMaterial({color:new THREE.Color(r,g,b),transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false});
+    var m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);ST.scene.add(m);return m;
+  }
+  makeNebula(-35,12,-50, 0.18,0.03,0.35, 12, 0.04);
+  makeNebula(45,8,-40, 0.04,0.18,0.4, 10, 0.03);
+  makeNebula(0,25,-50, 0.2,0.02,0.18, 8, 0.03);
+  makeNebula(-20,-5,-35, 0.0,0.2,0.2, 8, 0.025);
+  makeNebula(25,20,-45, 0.15,0.05,0.3, 10, 0.03);
+  makeNebula(-40,8,20, 0.05,0.15,0.3, 8, 0.025);
+  makeNebula(35,-8,15, 0.15,0.03,0.15, 8, 0.025);
+
+  // === COSMIC DUST BANDS — flat colored planes ===
+  var dustColors=[0x0a0018,0x050820,0x000c18,0x0c0014];
+  dustColors.forEach(function(c,i){
+    var dg=new THREE.PlaneGeometry(120,120);
+    var dm=new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.04-i*0.005,side:THREE.DoubleSide,depthWrite:false});
+    var dust=new THREE.Mesh(dg,dm);
+    dust.position.set((Math.random()-0.5)*30,15+i*8,-30-i*10);
+    dust.rotation.x=-Math.PI/2+(Math.random()-0.5)*0.3;
+    ST.scene.add(dust);
+  });
+
+  // === GALAXY SPIRAL DISC — very subtle ===
+  var spiralGeo=new THREE.RingGeometry(5,50,64);
+  var spiralMat=new THREE.MeshBasicMaterial({color:0x0a0620,transparent:true,opacity:0.03,side:THREE.DoubleSide,depthWrite:false});
+  var spiral=new THREE.Mesh(spiralGeo,spiralMat);
+  spiral.rotation.x=-Math.PI/2;spiral.position.y=0.5;
+  ST.scene.add(spiral);
+
+  // === FLOATING ASTEROIDS ===
+  var astMat=new THREE.MeshPhysicalMaterial({color:0x4a4050,roughness:0.7,metalness:0.3,emissive:0x100818,emissiveIntensity:0.15});
+  for(var ai=0;ai<12;ai++){
+    var asz=0.3+Math.random()*1.2;
+    var ageo=new THREE.IcosahedronGeometry(asz,Math.random()>0.5?0:1);
+    var ast=new THREE.Mesh(ageo,astMat.clone());
+    ast.material.color.setHSL(Math.random()*0.1+0.65,0.1,0.25+Math.random()*0.15);
+    ast.position.set((Math.random()-0.5)*80,Math.random()*15+3,(Math.random()-0.5)*60-20);
+    ast.rotation.set(Math.random()*6,Math.random()*6,Math.random()*6);
+    ast.userData.isAsteroid=true;
+    ST.scene.add(ast);
+  }
+  // === FLOATING PLANETS ===
+  var planetData=[{r:2,color:0x8844aa,em:0x4422aa},{r:1.2,color:0x4488aa,em:0x224466},{r:0.8,color:0xaa6644,em:0x663322}];
+  planetData.forEach(function(pd,i){
+    var pg=new THREE.Mesh(new THREE.SphereGeometry(pd.r,24,24),new THREE.MeshPhysicalMaterial({color:pd.color,roughness:0.6,metalness:0.2,emissive:pd.em,emissiveIntensity:0.2}));
+    pg.position.set(-25+i*22,5+Math.random()*10,-35-i*5);
+    pg.userData.isPlanet=true;
+    ST.scene.add(pg);
+    // Ring on the big planet
+    if(pd.r>1.5){
+      var ring=new THREE.Mesh(new THREE.RingGeometry(pd.r*1.3,pd.r*2,32),new THREE.MeshBasicMaterial({color:0xaa8866,transparent:true,opacity:0.3,side:THREE.DoubleSide}));
+      ring.position.copy(pg.position);ring.rotation.x=Math.PI/2.5;ST.scene.add(ring);}
+  });
+
+  window.addEventListener('resize',onResize);
+  var c=document.getElementById('main');
+  c.addEventListener('mousedown',onMouseDown);
+  c.addEventListener('mousemove',onMouseMove);
+  c.addEventListener('mouseup',onMouseUp);
+  c.addEventListener('wheel',onWheel);
+  c.addEventListener('contextmenu',function(e){e.preventDefault()});
+  document.addEventListener('keydown',onKeyDown);
+  document.addEventListener('click',function(){document.getElementById('ctxMenu').classList.remove('show')});
+
+  buildToolbar();
+  animate();
+}
+
+function updateCamera(){
+  ST.camera.position.set(Math.sin(ST.cameraAngle)*ST.cameraDist,ST.cameraHeight,Math.cos(ST.cameraAngle)*ST.cameraDist);
+  ST.camera.lookAt(0,2,0);
+}
+
+function buildToolbar(){
+  var tb=document.getElementById('toolbar');tb.innerHTML='';
+  TOOLS.forEach(function(t){
+    if(t.sep){var s=document.createElement('div');s.className='tsep';tb.appendChild(s);return}
+    var b=document.createElement('div');b.className='tb';b.title=t.lbl;
+    b.innerHTML='<span class="ic">'+t.ic+'</span><span class="lb">'+t.lbl+'</span>';
+    b.onclick=function(){selectTool(t.id)};b.id='tool-'+t.id;tb.appendChild(b);
+  });
+}
+
+function selectTool(id){
+  ST.selectedTool=ST.selectedTool===id?null:id;
+  document.querySelectorAll('.tb').forEach(function(b){b.classList.remove('active')});
+  if(ST.selectedTool){
+    document.getElementById('tool-'+id)?.classList.add('active');
+    document.body.style.cursor='crosshair';
+    document.getElementById('hintText').textContent='Click+drag in the scene to place one object';
+  }else{
+    document.body.style.cursor='default';
+    document.getElementById('hintText').textContent='Select a tool on the left, then click+drag in the scene to place it';
+  }
+  ST.selectedEl=null;closeProps();
+}
+
+function resetPlacementMode(){
+  ST.selectedTool=null;
+  ST.isDragging=false;
+  ST.isRightDrag=false;
+  drawStart=null;
+  if(drawPreview){
+    if(ST.scene){ST.scene.remove(drawPreview)}
+    drawPreview=null;
+  }
+  document.querySelectorAll('.tb').forEach(function(b){b.classList.remove('active')});
+  document.body.style.cursor='default';
+}
+
+function clearSelectedTool(){
+  resetPlacementMode();
+  ST.selectedEl=null;
+  closeProps();
+}
+
+// ===== SANDBOX ELEMENTS =====
+// Placed objects render noticeably larger than their old default so nothing
+// gets lost in the scene. Mirrors/lenses/prisms/blocks feed this same value
+// into their "Size" slider baseline, and water/lights get the same visual
+// bump — the ray-hit math already scales off el.scale / userData.size, so
+// enlarging here doesn't throw off where rays actually strike.
+var DEFAULT_ELEMENT_SCALE=1.55;
+var DEFAULT_LIGHT_SCALE=1.4;
+function addElement(type,x,y,z,angle,sub){
+  var id=ST.elementId++;
+  var g=new THREE.Group();
+  g.name='el_'+id;
+
+  if(type==='light'){
+    var bc=0xffff00;
+    // Cosmic plasma core - rotating energy orb
+    var coreGeo=new THREE.DodecahedronGeometry(0.45,0);
+    var coreMat=new THREE.MeshPhysicalMaterial({color:0x00d4ff,metalness:0.9,roughness:0.1,emissive:0x8b5cf6,emissiveIntensity:0.7,clearcoat:1});
+    var core=new THREE.Mesh(coreGeo,coreMat);core.rotation.x=Math.PI/4;g.add(core);
+    // Outer cosmic ring cage
+    var cageGeo=new THREE.TorusGeometry(0.65,0.06,8,6);
+    var cageMat=new THREE.MeshPhysicalMaterial({color:0x1a1040,metalness:0.95,roughness:0.15,emissive:0x00d4ff,emissiveIntensity:0.25});
+    var cage=new THREE.Mesh(cageGeo,cageMat);g.add(cage);
+    var cage2=new THREE.Mesh(cageGeo,cageMat.clone());cage2.rotation.x=Math.PI/2;g.add(cage2);
+    // Nebula energy glow
+    g.add(new THREE.Mesh(new THREE.SphereGeometry(0.8,16,16),new THREE.MeshBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.1})));
+    // Cosmic antenna spikes
+    for(var ai=0;ai<4;ai++){var ang=ai*Math.PI/2;var spike=new THREE.Mesh(new THREE.ConeGeometry(0.04,0.5,6),new THREE.MeshPhysicalMaterial({color:0x1a1040,metalness:0.9,roughness:0.15,emissive:0x00d4ff,emissiveIntensity:0.3}));spike.position.set(Math.cos(ang)*0.65,Math.sin(ang)*0.65,0);spike.rotation.z=ang-Math.PI/2;g.add(spike)}
+    g.add(new THREE.PointLight(0x00d4ff,1.5,25));
+    g.userData={type:'light',id:id,angle:angle||0,beamLength:12,beamColor:'#ffff00'};
+  }else if(type==='mirror'){
+    var h=3.5;
+    if(sub==='plane'){
+      // Space plane mirror - cosmic reflective panel with holographic frame
+      var frameMat=new THREE.MeshPhysicalMaterial({color:0x1a1040,metalness:0.95,roughness:0.12,emissive:0x0a0520,emissiveIntensity:0.3});
+      // Thick back plate
+      g.add(new THREE.Mesh(new THREE.BoxGeometry(0.35,h+0.2,2.4),frameMat));
+      // Side accent panels (plasma cyan)
+      var accentMat=new THREE.MeshPhysicalMaterial({color:0x00d4ff,metalness:0.7,roughness:0.15,emissive:0x00d4ff,emissiveIntensity:0.4});
+      g.add(new THREE.Mesh(new THREE.BoxGeometry(0.06,h+0.35,0.08),accentMat).translateX(0.1).translateZ(1.05));
+      g.add(new THREE.Mesh(new THREE.BoxGeometry(0.06,h+0.35,0.08),accentMat.clone()).translateX(0.1).translateZ(-1.05));
+      // Wide reflective face — full visible mirror surface
+      var mGeo=new THREE.BoxGeometry(0.08,h,2.2);
+      g.add(new THREE.Mesh(mGeo,new THREE.MeshPhysicalMaterial({color:0xe8f0ff,metalness:1.0,roughness:0.0,clearcoat:1,clearcoatRoughness:0.01,emissive:0x4080c0,emissiveIntensity:0.35,envMapIntensity:2.0})));
+      // Second reflective layer for depth
+      g.add(new THREE.Mesh(new THREE.BoxGeometry(0.04,h,2.0),new THREE.MeshPhysicalMaterial({color:0xc0d8ff,metalness:0.98,roughness:0.0,clearcoat:1,transparent:true,opacity:0.5,emissive:0x6090d0,emissiveIntensity:0.2})).translateX(0.06));
+      // Glow strip on face (plasma)
+      g.add(new THREE.Mesh(new THREE.PlaneGeometry(0.04,h*0.9),new THREE.MeshBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.6,side:THREE.DoubleSide})).translateX(0.12).rotateY(Math.PI/2));
+      // Star-point bolts at corners
+      var boltMat=new THREE.MeshPhysicalMaterial({color:0x1a1040,metalness:0.95,roughness:0.2,emissive:0x00d4ff,emissiveIntensity:0.2});
+      for(var bi=-1;bi<=1;bi+=2){for(var bj=-1;bj<=1;bj+=2){var bolt=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.08,8),boltMat);bolt.rotation.x=Math.PI/2;bolt.position.set(0.18,bi*(h/2-0.1),bj*1.15);g.add(bolt)}}
+    }else{
+      // Filled circular mirror bent along Z — bowl (concave) or dome (convex)
+      var R=h*0.55;
+      var curveDepth=R*0.4;
+      var mgeo=new THREE.SphereGeometry(R,48,48,0,Math.PI*2,0,Math.PI/2);
+      var mm=new THREE.Mesh(mgeo,new THREE.MeshPhysicalMaterial({color:0xe8f0ff,metalness:1.0,roughness:0.0,clearcoat:1,clearcoatRoughness:0.01,emissive:0x4080c0,emissiveIntensity:0.4,side:THREE.DoubleSide}));
+      mm.rotation.x=Math.PI/2;
+      if(sub==='convex')mm.rotation.x=-Math.PI/2;
+      mm.scale.z=curveDepth/R;
+      g.add(mm);
+      // Edge glow ring
+      g.add(new THREE.Mesh(new THREE.TorusGeometry(R,0.04,8,48),new THREE.MeshBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.7})));
+      // Back cap
+      var bgeo=new THREE.CircleGeometry(R,48);
+      var bc=new THREE.Mesh(bgeo,new THREE.MeshPhysicalMaterial({color:0x0c0520,metalness:0.9,roughness:0.2,emissive:0x050218,emissiveIntensity:0.3,side:THREE.DoubleSide}));
+      bc.position.z=sub==='concave'?-curveDepth:curveDepth;
+      g.add(bc);
+      // Focus marker — cosmic crosshair
+      var fDist=sub==='concave'?-3:3;
+      var fDot=new THREE.Mesh(new THREE.OctahedronGeometry(0.18,0),new THREE.MeshPhysicalMaterial({color:0x00d4ff,metalness:0.7,roughness:0.15,emissive:0x8b5cf6,emissiveIntensity:0.6}));
+      fDot.position.set(fDist,0,0);g.add(fDot);
+      var fGlow=new THREE.Mesh(new THREE.SphereGeometry(0.3,16,16),new THREE.MeshBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.12}));
+      fGlow.position.set(fDist,0,0);g.add(fGlow);
+      // Focus crosshair — nebula lines
+      var chMat=new THREE.LineBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.4});
+      g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(fDist-0.3,0,0),new THREE.Vector3(fDist+0.3,0,0)]),chMat));
+      g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(fDist,-0.3,0),new THREE.Vector3(fDist,0.3,0)]),chMat.clone()));
+    }
+    g.userData={type:'mirror',subtype:sub,id:id,angle:angle||0};
+  }else if(type==='lens'){
+    var h=3.5,thick=sub==='concave'?0.25:0.55;
+    var shape=new THREE.Shape();
+    if(sub==='concave'){shape.moveTo(0,-h/2);shape.quadraticCurveTo(-thick,0,0,h/2);shape.quadraticCurveTo(thick,0,0,-h/2)}
+    else{shape.moveTo(0,-h/2);shape.quadraticCurveTo(thick,0,0,h/2);shape.quadraticCurveTo(-thick,0,0,-h/2)}
+    var geo=new THREE.ExtrudeGeometry(shape,{depth:0.2,bevelEnabled:false});
+    // Cosmic energy lens — plasma-blue with nebula glow
+    var mesh=new THREE.Mesh(geo,new THREE.MeshPhysicalMaterial({color:0xc0d0ff,transparent:true,opacity:0.42,roughness:0,transmission:0.65,ior:1.5,clearcoat:1,clearcoatRoughness:0.04,emissive:0x00d4ff,emissiveIntensity:0.35,side:THREE.DoubleSide,metalness:0.15}));
+    mesh.rotation.y=Math.PI/2;g.add(mesh);
+    // Nebula edge frame
+    var edgeMat=new THREE.LineBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.9});
+    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),edgeMat));
+    // Cosmic housing ring at center
+    var ringGeo=new THREE.TorusGeometry(h/2*0.35,0.04,8,24);
+    var ringMat=new THREE.MeshPhysicalMaterial({color:0x1a1040,metalness:0.95,roughness:0.15,emissive:0x8b5cf6,emissiveIntensity:0.3});
+    var ring=new THREE.Mesh(ringGeo,ringMat);ring.rotation.y=Math.PI/2;g.add(ring);
+    // Axis line — cosmic dashed
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-2,0,0),new THREE.Vector3(2,0,0)]),new THREE.LineDashedMaterial({color:0x00d4ff,dashSize:0.2,gapSize:0.15,transparent:true,opacity:0.5})));
+    // Focus markers — plasma crosshairs
+    var fDist=sub==='concave'?-3:3;
+    var fDot=new THREE.Mesh(new THREE.OctahedronGeometry(0.15,0),new THREE.MeshPhysicalMaterial({color:0x00d4ff,metalness:0.7,roughness:0.15,emissive:0x8b5cf6,emissiveIntensity:0.6}));
+    fDot.position.set(fDist,0,0);g.add(fDot);
+    var fGlow=new THREE.Mesh(new THREE.SphereGeometry(0.25,16,16),new THREE.MeshBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.12}));
+    fGlow.position.set(fDist,0,0);g.add(fGlow);
+    var chMat=new THREE.LineBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.35});
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(fDist-0.25,0,0),new THREE.Vector3(fDist+0.25,0,0)]),chMat));
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(fDist,-0.25,0),new THREE.Vector3(fDist,0.25,0)]),chMat.clone()));
+    g.userData={type:'lens',subtype:sub,id:id,angle:angle||0};
+  }else if(type==='prism'){
+    var shape=new THREE.Shape();shape.moveTo(-1.5,-1);shape.lineTo(1.5,-1);shape.lineTo(0,1.6);shape.closePath();
+    var geo=new THREE.ExtrudeGeometry(shape,{depth:1.5,bevelEnabled:false});
+    // Cosmic energy prism — transparent with nebula frame
+    g.add(new THREE.Mesh(geo,new THREE.MeshPhysicalMaterial({color:0xd0d8ff,transparent:true,opacity:0.30,roughness:0,clearcoat:1,clearcoatRoughness:0.05,side:THREE.DoubleSide,emissive:0x8b5cf6,emissiveIntensity:0.15,metalness:0.12})));
+    // Nebula frame edges
+    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x8b5cf6})));
+    // Corner star points
+    var boltMat2=new THREE.MeshPhysicalMaterial({color:0x1a1040,metalness:0.95,roughness:0.15,emissive:0x8b5cf6,emissiveIntensity:0.25});
+    var verts=[[-1.5,-1,0],[1.5,-1,0],[0,1.6,0],[-1.5,-1,1.5],[1.5,-1,1.5],[0,1.6,1.5]];
+    verts.forEach(function(v){var b=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),boltMat2);b.position.set(v[0],v[1],v[2]);g.add(b)});
+    g.userData={type:'prism',id:id,angle:angle||0};
+  }else if(type==='water'){
+    var w=10;
+    var depth=2.4;
+    var geo=new THREE.BoxGeometry(w,depth,1.2);
+    // Cosmic nebula pool — transparent liquid with holographic frame
+    var mesh=new THREE.Mesh(geo,new THREE.MeshPhysicalMaterial({color:0x0088ff,transparent:true,opacity:0.40,roughness:0.05,metalness:0.12,transmission:0.2,ior:1.33,clearcoat:1,clearcoatRoughness:0.05,emissive:0x0040aa,emissiveIntensity:0.28,side:THREE.DoubleSide}));
+    mesh.userData.isWater=true;g.add(mesh);
+    // Holographic frame edges
+    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.85})));
+    // Star-point corner brackets
+    var bracketMat=new THREE.MeshPhysicalMaterial({color:0x1a1040,metalness:0.95,roughness:0.15,emissive:0x00d4ff,emissiveIntensity:0.15});
+    var bw=w/2,bh=depth/2;
+    [[-bw,bh],[bw,bh],[-bw,-bh],[bw,-bh]].forEach(function(p){
+      var bracket=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.12,1.25),bracketMat);bracket.position.set(p[0],p[1],0);g.add(bracket);
+    });
+    // Surface energy line (plasma)
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-w/2,bh,0.62),new THREE.Vector3(w/2,bh,0.62)]),new THREE.LineBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.7})));
+    // Coin below the surface: a simple apparent-depth demonstration object.
+    var coin=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.45,0.12,32),new THREE.MeshPhysicalMaterial({color:0xffc928,metalness:0.82,roughness:0.22,emissive:0x6b3d00,emissiveIntensity:0.22}));
+    coin.rotation.x=Math.PI/2;
+    coin.position.set(-1.8,-0.65,0.12);
+    coin.userData.isCoin=true;
+    g.add(coin);
+    var coinMark=new THREE.Mesh(new THREE.TorusGeometry(0.27,0.035,8,24),new THREE.MeshBasicMaterial({color:0xfff0a0}));
+    coinMark.rotation.x=Math.PI/2;
+    coinMark.position.set(-1.8,-0.65,0.19);
+    g.add(coinMark);
+    // Apparent image of the coin seen from above: apparent depth = real depth / n.
+    var surfaceY=depth/2;
+    var realDepth=surfaceY-(-0.65);
+    var apparentDepth=realDepth/1.33;
+    var apparentY=surfaceY-apparentDepth;
+    // Two observer rays: their backward extensions meet at the apparent image.
+    var apparentRayMat=new THREE.LineDashedMaterial({color:0x8fffff,dashSize:0.12,gapSize:0.1,transparent:true,opacity:0.85});
+    var rayA=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-3.1,1.2,0.3),new THREE.Vector3(-1.8,apparentY,0.3)]),apparentRayMat);
+    var rayB=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.5,1.2,0.3),new THREE.Vector3(-1.8,apparentY,0.3)]),apparentRayMat.clone());
+    rayA.computeLineDistances();rayB.computeLineDistances();
+    rayA.userData.isApparentDepthLine=true;rayB.userData.isApparentDepthLine=true;
+    rayA.visible=false;rayB.visible=false;
+    g.add(rayA);g.add(rayB);
+    var labelCanvas=document.createElement('canvas');labelCanvas.width=512;labelCanvas.height=80;
+    var labelCtx=labelCanvas.getContext('2d');labelCtx.font='bold 23px Inter, sans-serif';labelCtx.fillStyle='#8fffff';labelCtx.textAlign='center';labelCtx.fillText('Ray intersection • depth: '+apparentDepth.toFixed(2),256,42);
+    var labelSprite=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(labelCanvas),transparent:true,opacity:0.9}));
+    labelSprite.position.set(-1.8,apparentY+0.55,0.3);labelSprite.scale.set(2.7,0.42,1);labelSprite.userData.isApparentDepthLabel=true;labelSprite.visible=false;g.add(labelSprite);
+    g.userData.tirMarker=null;
+    g.userData={type:'water',id:id,width:w,depth:depth,refractiveIndex:1.33,coinHit:false,angle:angle||0};
+  }else if(type==='block'){
+    var geo=new THREE.BoxGeometry(2,2.5,1.5);
+    // Cosmic crystal glass — transparent with nebula housing
+    g.add(new THREE.Mesh(geo,new THREE.MeshPhysicalMaterial({color:0xb0c8ff,transparent:true,opacity:0.36,roughness:0.05,transmission:0.4,ior:1.8,clearcoat:1,clearcoatRoughness:0.03,emissive:0x8b5cf6,emissiveIntensity:0.22,metalness:0.1})));
+    // Nova frame edges
+    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0xec4899,transparent:true,opacity:0.85})));
+    // Corner star nodes
+    var armorMat=new THREE.MeshPhysicalMaterial({color:0x1a1040,metalness:0.95,roughness:0.15,emissive:0xec4899,emissiveIntensity:0.2});
+    var hw=1,hh=1.25;
+    [[-hw,hh],[hw,hh],[-hw,-hh],[hw,-hh]].forEach(function(p){
+      var armor=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.1,8),armorMat);armor.rotation.x=Math.PI/2;armor.position.set(p[0],p[1],0.75);g.add(armor);
+    });
+    // Center energy line — nova
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-hw,0,0.76),new THREE.Vector3(hw,0,0.76)]),new THREE.LineBasicMaterial({color:0xec4899,transparent:true,opacity:0.45})));
+    g.userData={type:'block',id:id,angle:angle||0};
+  }
+
+  g.position.set(x,y,z||0);
+  if(angle)g.rotation.z=THREE.MathUtils.degToRad(angle);
+  if(type==='light'){
+    g.scale.set(DEFAULT_LIGHT_SCALE,DEFAULT_LIGHT_SCALE,DEFAULT_LIGHT_SCALE);
+  }else{
+    g.scale.set(DEFAULT_ELEMENT_SCALE,DEFAULT_ELEMENT_SCALE,DEFAULT_ELEMENT_SCALE);
+    if(type==='mirror'||type==='lens'||type==='prism'||type==='block')g.userData.size=DEFAULT_ELEMENT_SCALE;
+  }
+  ST.scene.add(g);ST.elements.push(g);
+  if(type==='light')ST.lights.push(g);
+  traceAllRays();
+  if(ST.selectedTool){
+    clearSelectedTool();
+  }
+  toast('✅ Placed '+type);
+}
+
+// ===== MOUSE =====
+var drawStart=null,drawPreview=null;
+function onMouseDown(e){
+  if(e.target.closest('#toolbar,#topbar,#props,#ctxMenu,#presetPanel'))return;
+  ST.lastMouse={x:e.clientX,y:e.clientY};
+  if(e.button===2){var hit=getHitElement(e);if(hit){ST.selectedEl=hit;showContextMenu(e.clientX,e.clientY)}return}
+  if(ST.selectedTool){
+    var existing=getHitElement(e);
+    if(existing){
+      ST.selectedEl=existing;showProps(existing);highlightElement(existing);
+      resetPlacementMode();
+      if(e.shiftKey){
+        ST.isRotating=true;ST.rotateStartX=e.clientX;ST.rotateStartAngle=existing.userData.angle||0;
+        document.body.style.cursor='ew-resize';
+      }else{
+        ST.isDragging=true;var existingPos=getScenePos(e);
+        if(existingPos)ST.dragOffset.copy(existing.position).sub(existingPos);
+        document.body.style.cursor='grabbing';
+      }
+      return;
+    }
+    var pos=getScenePos(e);
+    if(pos){
+      // Start draw mode: click+drag to set size
+      drawStart=pos.clone();
+      ST.isDragging=true;
+      document.body.style.cursor='crosshair';
+    }
+    return;
+  }
+  var hit=getHitElement(e);
+  if(hit){ST.selectedEl=hit;ST.isDragging=true;showProps(hit);highlightElement(hit);var pos=getScenePos(e);if(pos)ST.dragOffset.copy(hit.position).sub(pos);document.body.style.cursor='grabbing'}
+  else{ST.selectedEl=null;closeProps();clearHighlight();ST.isRightDrag=true}
+}
+function onMouseMove(e){
+  ST.mouse.x=(e.clientX/window.innerWidth)*2-1;ST.mouse.y=-(e.clientY/window.innerHeight)*2+1;
+  if(ST.isRotating&&ST.selectedEl){
+    var rotatedAngle=ST.rotateStartAngle+(e.clientX-ST.rotateStartX)*0.6;
+    ST.selectedEl.userData.angle=rotatedAngle;
+    ST.selectedEl.rotation.z=THREE.MathUtils.degToRad(rotatedAngle);
+    showProps(ST.selectedEl);traceAllRays();
+  }else if(ST.isDragging&&ST.selectedTool&&drawStart){
+    clearTracedRays();
+    var pos=getScenePos(e);
+    if(pos&&drawPreview){ST.scene.remove(drawPreview)}
+    if(pos){
+      var dx=pos.x-drawStart.x,dy=pos.y-drawStart.y;
+      var len=Math.sqrt(dx*dx+dy*dy);
+      var angle=Math.atan2(dy,dx);
+      // Preview line
+      var pts=[drawStart.clone(),pos.clone()];
+      var geo=new THREE.BufferGeometry().setFromPoints(pts);
+      drawPreview=new THREE.Line(geo,new THREE.LineBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.6}));
+      drawPreview.position.z=0.1;ST.scene.add(drawPreview);
+      document.getElementById('hintText').textContent='📏 Size: '+len.toFixed(1)+' units — Release to place';
+    }
+  }else  if(ST.isDragging&&ST.selectedEl){
+    clearTracedRays();
+    var pos=getScenePos(e);if(pos){ST.selectedEl.position.x=pos.x+ST.dragOffset.x;ST.selectedEl.position.y=Math.max(0.5,pos.y+ST.dragOffset.y)}}
+  else if(ST.isRightDrag){ST.cameraAngle-=(e.clientX-ST.lastMouse.x)*0.005;ST.lastMouse={x:e.clientX,y:e.clientY};updateCamera()}
+  if(!ST.isDragging&&!ST.isRightDrag){var hit=getHitElement(e);document.body.style.cursor=hit?'grab':(ST.selectedTool?'crosshair':'default')}
+}
+function onMouseUp(e){
+  if(ST.isRotating){
+    ST.isRotating=false;ST.isDragging=false;
+    document.body.style.cursor=ST.selectedTool?'crosshair':'default';
+    traceAllRays();
+    return;
+  }
+  if(ST.isDragging&&ST.selectedTool&&drawStart){
+    var pos=getScenePos(e||{clientX:ST.lastMouse.x,clientY:ST.lastMouse.y});
+    if(pos&&drawPreview){ST.scene.remove(drawPreview);drawPreview=null}
+    if(pos){
+      var dx=pos.x-drawStart.x,dy=pos.y-drawStart.y;
+      var len=Math.sqrt(dx*dx+dy*dy);
+      var angle=Math.atan2(dy,dx)*180/Math.PI;
+      var t=TOOLS.find(function(tool){return tool.id===ST.selectedTool});
+      if(t){
+        addElement(t.type,drawStart.x,Math.max(0.5,drawStart.y),0,angle,t.sub||undefined);
+        // Apply drawn size to last placed element
+        var last=ST.elements[ST.elements.length-1];
+        if(last&&len>0.5){
+          var s=Math.max(0.5,Math.min(3,len/3));
+          last.userData.size=s;last.scale.set(s,s,s);
+        }
+      }
+    }
+    drawStart=null;
+    ST.isDragging=false;
+
+    // Finish placement mode after placing one object
+    resetPlacementMode();
+
+    document.getElementById('hintText').textContent=
+      'Select a tool on the left, then click+drag in the scene to place it';
+
+    return;
+  }
+  if(ST.isDragging && !ST.selectedTool){
+    ST.isDragging=false;
+    document.body.style.cursor='default';
+    traceAllRays();
+    return;
+  }
+  ST.isDragging=false;ST.isRightDrag=false;drawStart=null;
+  if(ST.selectedTool){
+    document.body.style.cursor='crosshair';
+  }else{
+    document.body.style.cursor='default';
+  }
+  traceAllRays();
+}
+function onWheel(e){ST.cameraDist=Math.max(5,Math.min(40,ST.cameraDist+e.deltaY*0.02));ST.cameraHeight=Math.max(2,Math.min(20,ST.cameraHeight+e.deltaY*0.01));updateCamera()}
+function onKeyDown(e){
+  if((e.key==='Delete'||e.key==='Backspace')&&ST.selectedEl)deleteSelected();
+  if(e.key==='Escape'){resetPlacementMode();ST.selectedEl=null;closeProps()}
+  if(e.key==='r'&&ST.selectedEl)rotateSelected(15);
+}
+
+function getScenePos(e){
+  ST.mouse.x=(e.clientX/window.innerWidth)*2-1;ST.mouse.y=-(e.clientY/window.innerHeight)*2+1;
+  ST.raycaster.setFromCamera(ST.mouse,ST.camera);
+  var hit=new THREE.Vector3();ST.raycaster.ray.intersectPlane(ST.plane,hit);return hit;
+}
+function getHitElement(e){
+  ST.mouse.x=(e.clientX/window.innerWidth)*2-1;ST.mouse.y=-(e.clientY/window.innerHeight)*2+1;
+  ST.raycaster.setFromCamera(ST.mouse,ST.camera);
+  for(var i=0;i<ST.elements.length;i++){var ch=[];ST.elements[i].traverse(function(c){if(c.isMesh)ch.push(c)});if(ST.raycaster.intersectObjects(ch).length>0)return ST.elements[i]}
+  return null;
+}
+function highlightElement(el){clearHighlight();el.traverse(function(c){if(c.isMesh&&c.material&&c.material.emissive){c.userData._oe=c.material.emissive.clone();c.material.emissive.set(0x00d4ff);c.material.emissiveIntensity=0.6}})}
+function clearHighlight(){ST.elements.forEach(function(el){el.traverse(function(c){if(c.isMesh&&c.material&&c.userData._oe){c.material.emissive.copy(c.userData._oe)}})})}
+
+// ===== PROPS =====
+function showProps(el){
+  var p=document.getElementById('props'),d=el.userData;
+  var html='<h3>'+({light:'💡 Light',mirror:'🪞 Mirror',lens:'🔍 Lens',prism:'🔺 Prism',water:'🌊 Water',block:'🧊 Glass'}[d.type]||d.type)+'</h3>';
+  html+='<div class="pr"><label>Type</label><span class="v">'+d.type+(d.subtype?' ('+d.subtype+')':'')+'</span></div>';
+  html+='<div class="ps"><div class="pr"><label>Rotation</label><span class="v" id="pA">'+(d.angle||0)+'°</span></div><input type="range" min="-180" max="180" value="'+(d.angle||0)+'" oninput="setElAngle('+d.id+',this.value)"></div>';
+  html+='<div class="ps"><div class="pr"><label>Height</label><span class="v" id="pH">'+el.position.y.toFixed(1)+'</span></div><input type="range" min="0.5" max="12" step="0.1" value="'+el.position.y+'" oninput="setElY('+d.id+',this.value)"></div>';
+  if(d.type==='light'){
+    html+='<div class="ps"><div class="pr"><label>Beam Length</label><span class="v" id="pB">'+(d.beamLength||5)+'</span></div><input type="range" min="1" max="20" step="0.5" value="'+(d.beamLength||5)+'" oninput="setBeamLen('+d.id+',this.value)"></div>';
+    html+='<div class="ps"><div class="pr"><label>Beam Color</label><span class="v">'+(d.beamColor||'#ffff00')+'</span></div>';
+    html+='<div style="display:flex;gap:4px;margin-top:4px;">';
+    ['#ffffff','#ffff00','#ff4444','#00ff88','#00aaff','#ff00ff'].forEach(function(c){
+      html+='<div onclick="setBeamColor('+d.id+',\''+c+'\')" style="width:24px;height:24px;border-radius:6px;background:'+c+';cursor:pointer;border:2px solid '+(d.beamColor===c?'#00d4ff':'transparent')+'"></div>';
+    });
+    html+='</div></div>';
+  }
+  if(d.type==='mirror'||d.type==='lens'||d.type==='prism'||d.type==='block'){
+    html+='<div class="ps"><div class="pr"><label>Size</label><span class="v" id="pS">'+(d.size||1).toFixed(1)+'x</span></div><input type="range" min="0.3" max="3" step="0.1" value="'+(d.size||1)+'" oninput="setElSize('+d.id+',this.value)"></div>';
+  }
+  html+='<div class="pr"><label>Position</label><span class="v">('+el.position.x.toFixed(1)+', '+el.position.y.toFixed(1)+')</span></div>';
+  html+='<div class="pa"><div class="pab" onclick="rotateSelected(15)">🔄+15°</div><div class="pab" onclick="rotateSelected(-15)">🔄-15°</div><div class="pab" onclick="duplicateSelected()">📋</div><div class="pab del" onclick="deleteSelected()">🗑</div></div>';
+  p.innerHTML=html;p.classList.add('open');
+}
+function closeProps(){document.getElementById('props').classList.remove('open')}
+function findEl(id){return ST.elements.find(function(e){return e.userData.id===id})}
+function setElAngle(id,v){var el=findEl(id);if(!el)return;el.userData.angle=parseFloat(v);el.rotation.z=THREE.MathUtils.degToRad(parseFloat(v));var e=document.getElementById('pA');if(e)e.textContent=v+'°';traceAllRays()}
+function setElY(id,v){var el=findEl(id);if(!el)return;el.position.y=parseFloat(v);var e=document.getElementById('pH');if(e)e.textContent=parseFloat(v).toFixed(1);traceAllRays()}
+function setBeamLen(id,v){
+  var el=findEl(id);if(!el)return;
+  el.userData.beamLength=parseFloat(v);
+  var e=document.getElementById('pB');if(e)e.textContent=v;
+  traceAllRays();
+}
+function setBeamColor(id,c){
+  var el=findEl(id);if(!el)return;
+  el.userData.beamColor=c;
+  // Update light sphere color
+  el.children.forEach(function(child){
+    if(child.isMesh&&child.geometry?.type==='SphereGeometry'&&child.material.opacity===undefined){
+      child.material.color.set(c);
+    }
+    if(child.isMesh&&child.geometry?.type==='SphereGeometry'&&child.material.opacity!==undefined){
+      child.material.color.set(c);
+    }
+    if(child.isPointLight){child.color.set(c)}
+    if(child.isLine&&child.name==='beamLine'){child.material.color.set(c)}
+    if(child.isMesh&&child.name==='beamArrow'){child.material.color.set(c)}
+  });
+  showProps(el);traceAllRays();
+}
+function setElSize(id,v){
+  var el=findEl(id);if(!el)return;
+  var s=parseFloat(v);
+  el.userData.size=s;
+  el.scale.set(s,s,s);
+  var e=document.getElementById('pS');if(e)e.textContent=s.toFixed(1)+'x';
+  traceAllRays();
+}
+
+// ===== RAY TRACING ENGINE =====
+var tracedRays=[];
+function clearTracedRays(){tracedRays.forEach(function(r){ST.scene.remove(r)});tracedRays=[]}
+
+// ----- Virtual / real image locator -----
+// Every time a ray reflects off a mirror or refracts through a lens, we log
+// the point it left the surface and the direction it heads off in. Once every
+// light in the scene has been traced, rays that hit the SAME element are
+// grouped together. Two or more such rays are enough to find the single point
+// their paths (or their backward extensions) all pass through — that point is
+// the image. If the rays only meet when extended backward through the mirror
+// or lens, the image is virtual and is drawn with dashed "phantom" rays; if
+// they meet in front of the element the image is real. This works for any
+// number of lights — 2, 3, or more all feed the same least-squares solve.
+var opticalEvents={};
+var imageMarkers=[];
+function clearImageMarkers(){imageMarkers.forEach(function(m){ST.scene.remove(m)});imageMarkers=[]}
+function recordOpticalEvent(el,point,dir){
+  var id=el.userData.id;
+  var d=normalizeVector(dir.clone());
+  if(!opticalEvents[id])opticalEvents[id]=[];
+  opticalEvents[id].push({point:point.clone(),dir:d,el:el});
+}
+// Least-squares point closest to a set of 2D lines (each given as a point + unit direction).
+function closestPointToLines(rays){
+  var Axx=0,Axy=0,Ayy=0,bx=0,by=0;
+  rays.forEach(function(r){
+    var dx=r.dir.x,dy=r.dir.y;
+    var mxx=1-dx*dx, mxy=-dx*dy, myy=1-dy*dy;
+    Axx+=mxx;Axy+=mxy;Ayy+=myy;
+    bx+=mxx*r.point.x+mxy*r.point.y;
+    by+=mxy*r.point.x+myy*r.point.y;
+  });
+  var det=Axx*Ayy-Axy*Axy;
+  if(Math.abs(det)<1e-6)return null;
+  return new THREE.Vector3((bx*Ayy-by*Axy)/det,(Axx*by-Axy*bx)/det,0);
+}
+function computeImageMarkers(){
+  clearImageMarkers();
+  Object.keys(opticalEvents).forEach(function(id){
+    var rays=opticalEvents[id];
+    if(rays.length<2)return; // need at least two rays to triangulate an image, just like real optics
+    var X=closestPointToLines(rays);
+    if(!X)return; // rays are (near-)parallel — no single image point (e.g. object at infinity)
+    var avgZ=rays.reduce(function(s,r){return s+r.point.z},0)/rays.length;
+    X.z=avgZ+0.06;
+    var behind=0,front=0;
+    rays.forEach(function(r){
+      var t=(X.x-r.point.x)*r.dir.x+(X.y-r.point.y)*r.dir.y;
+      r.t=t;
+      if(t<-0.05)behind++; else if(t>0.05)front++;
+    });
+    if(behind===0&&front===0)return;
+    var isVirtual=behind>=front;
+    drawImageMarker(rays,X,isVirtual);
+  });
+}
+function drawImageMarker(rays,X,isVirtual){
+  var color=isVirtual?0x8fffff:0x00ff88;
+  if(isVirtual){
+    // Dashed "phantom" rays: extend each reflected/refracted ray backward,
+    // through the mirror/lens, to the point they all appear to come from.
+    rays.forEach(function(r){
+      if(r.t>=-0.05)return;
+      var mat=new THREE.LineDashedMaterial({color:color,dashSize:0.14,gapSize:0.11,transparent:true,opacity:0.75});
+      var geo=new THREE.BufferGeometry().setFromPoints([r.point.clone(),X.clone()]);
+      var line=new THREE.Line(geo,mat);
+      line.computeLineDistances();
+      ST.scene.add(line);
+      imageMarkers.push(line);
+    });
+  }
+  // Image marker: hollow dashed ring for a virtual image, solid glowing disc for a real one.
+  var ringGeo=new THREE.RingGeometry(isVirtual?0.16:0.02,0.26,24);
+  var ringMat=new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:isVirtual?0.55:0.85,side:THREE.DoubleSide});
+  var ring=new THREE.Mesh(ringGeo,ringMat);
+  ring.position.copy(X);
+  ST.scene.add(ring);
+  imageMarkers.push(ring);
+  var glow=new THREE.Mesh(new THREE.SphereGeometry(0.14,12,12),new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:0.3}));
+  glow.position.copy(X);
+  ST.scene.add(glow);
+  imageMarkers.push(glow);
+  // Label
+  var canvas=document.createElement('canvas');canvas.width=320;canvas.height=64;
+  var ctx=canvas.getContext('2d');
+  ctx.fillStyle='rgba(8,4,24,0.85)';ctx.roundRect(0,0,320,64,10);ctx.fill();
+  var r=(color>>16)&255,g=(color>>8)&255,b=color&255;
+  ctx.strokeStyle='rgba('+r+','+g+','+b+',0.7)';ctx.lineWidth=2;ctx.roundRect(0,0,320,64,10);ctx.stroke();
+  ctx.font='bold 22px Inter, sans-serif';ctx.fillStyle='rgb('+r+','+g+','+b+')';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(isVirtual?'Virtual Image':'Real Image',160,32);
+  var sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(canvas),transparent:true,opacity:0.95,depthTest:false}));
+  sprite.position.set(X.x,X.y+0.45,X.z);
+  sprite.scale.set(1.7,0.34,1);
+  ST.scene.add(sprite);
+  imageMarkers.push(sprite);
+}
+
+function normalizeVector(v){
+  var len=v.length();
+  if(len<1e-8)return v.clone();
+  return v.multiplyScalar(1/len);
+}
+
+function reflectVector(direction, normal){
+  var n = normalizeVector(normal.clone());
+  if(direction.dot(n) > 0) n.negate();
+  return direction.clone().sub(n.clone().multiplyScalar(2 * direction.dot(n))).normalize();
+}
+
+function lensBend(direction, hit, center, angle, subtype){
+  // Thin-lens approximation: edge rays are aimed at the real focal point
+  // (convex) or away from the virtual focal point (concave).
+  var axis = new THREE.Vector3(Math.cos(angle), Math.sin(angle), 0).normalize();
+  var side = direction.dot(axis) >= 0 ? 1 : -1;
+  var focalLength = 3.0;
+  var focus = center.clone().add(axis.clone().multiplyScalar(side * focalLength));
+  var outgoing;
+
+  if(subtype === 'convex'){
+    outgoing = focus.sub(hit);
+  }else{
+    var virtualFocus = center.clone().add(axis.clone().multiplyScalar(-side * focalLength));
+    outgoing = hit.clone().sub(virtualFocus);
+  }
+  return normalizeVector(outgoing);
+}
+
+function refractVector(direction, normal, n1, n2){
+  var n = normalizeVector(normal.clone());
+  var cosI = -direction.clone().dot(n);
+  if(cosI < 0){
+    n.negate();
+    cosI = -direction.clone().dot(n);
+  }
+
+  var eta = n1 / n2;
+  var sinT2 = eta * eta * (1 - cosI * cosI);
+  if(sinT2 > 1) return null;
+
+  var cosT = Math.sqrt(Math.max(0, 1 - sinT2));
+  var refracted = direction.clone().multiplyScalar(eta).add(n.clone().multiplyScalar(eta * cosI - cosT));
+  return normalizeVector(refracted);
+}
+
+function totalInternalReflection(direction, normal, n1, n2){
+  var n = normalizeVector(normal.clone());
+  var cosI = -direction.clone().dot(n);
+  if (cosI < 0) {
+    n.negate();
+    cosI = -direction.clone().dot(n);
+  }
+  var sinCrit = n2 / n1;
+  return cosI < 0 || sinCrit >= 1 ? false : Math.sin(Math.acos(cosI)) > sinCrit;
+}
+
+function rayPlaneIntersect(origin, direction, planePos, normal){
+  var n = normalizeVector(normal.clone());
+  var denom = n.dot(direction);
+  if(Math.abs(denom) < 1e-6) return null;
+  var diff = planePos.clone().sub(origin);
+  var t = diff.dot(n) / denom;
+  if(t <= 0.15 || t > 120) return null;
+  return t;
+}
+
+function intersectPlaneElement(el, origin, direction){
+  var center = el.getWorldPosition(new THREE.Vector3());
+  var angle = THREE.MathUtils.degToRad(el.userData.angle || 0);
+  // The drawn mirror/lens is vertical at 0°; its tangent rotates from +Y.
+  // The perpendicular normal therefore starts on +X and rotates with it.
+  var surface = new THREE.Vector3(-Math.sin(angle), Math.cos(angle), 0).normalize();
+  var normal = new THREE.Vector3(Math.cos(angle), Math.sin(angle), 0).normalize();
+  var t = rayPlaneIntersect(origin, direction, center, normal);
+  if(t === null) return null;
+  var hit = origin.clone().add(direction.clone().multiplyScalar(t));
+  var local = hit.clone().sub(center);
+  if(Math.abs(local.dot(surface)) > 3.1) return null;
+  return { t: t, point: hit, normal: normal };
+}
+
+function intersectBox(origin, direction, center, halfX, halfY, angle){
+  var rad = THREE.MathUtils.degToRad(angle || 0);
+  var cos = Math.cos(rad), sin = Math.sin(rad);
+  var relOrigin = origin.clone().sub(center);
+  var localOrigin = new THREE.Vector3(cos * relOrigin.x + sin * relOrigin.y, -sin * relOrigin.x + cos * relOrigin.y, relOrigin.z);
+  var localDirection = new THREE.Vector3(cos * direction.x + sin * direction.y, -sin * direction.x + cos * direction.y, direction.z);
+  var minX = -halfX, maxX = halfX, minY = -halfY, maxY = halfY;
+  var tMin = -Infinity, tMax = Infinity;
+
+  for (var i = 0; i < 2; i++) {
+    var axis = i === 0 ? 'x' : 'y';
+    var d = localDirection[axis];
+    if (Math.abs(d) < 1e-8) {
+      if (localOrigin[axis] < (axis === 'x' ? minX : minY) || localOrigin[axis] > (axis === 'x' ? maxX : maxY)) return null;
+      continue;
+    }
+    var t1 = (axis === 'x' ? (minX - localOrigin.x) / d : (minY - localOrigin.y) / d);
+    var t2 = (axis === 'x' ? (maxX - localOrigin.x) / d : (maxY - localOrigin.y) / d);
+    var low = Math.min(t1, t2);
+    var high = Math.max(t1, t2);
+    if (low > tMin) tMin = low;
+    if (high < tMax) tMax = high;
+    if (tMin > tMax) return null;
+  }
+
+  // Outside the box, use the near face; inside the box, use the far face.
+  // The latter is required for the glass exit interface.
+  var hitT = tMin > 0.15 ? tMin : tMax;
+  if (!isFinite(hitT) || hitT <= 0.15) return null;
+  var hit = origin.clone().add(direction.clone().multiplyScalar(hitT));
+  var localHit = localOrigin.clone().add(localDirection.clone().multiplyScalar(hitT));
+  var localNormal = Math.abs(Math.abs(localHit.x) - halfX) < Math.abs(Math.abs(localHit.y) - halfY)
+    ? new THREE.Vector3(localHit.x < 0 ? -1 : 1, 0, 0)
+    : new THREE.Vector3(0, localHit.y < 0 ? -1 : 1, 0);
+  var normal = new THREE.Vector3(cos * localNormal.x - sin * localNormal.y, sin * localNormal.x + cos * localNormal.y, 0);
+  return { t: hitT, point: hit, normal: normal.normalize() };
+}
+
+function intersectCoin(origin, direction, center, radius){
+  var offset=origin.clone().sub(center);
+  // Optical rays are traced on z=0; coin depth is visual-only.
+  offset.z=0;
+  var b=2*offset.dot(direction);
+  var c=offset.dot(offset)-radius*radius;
+  var discriminant=b*b-4*c;
+  if(discriminant<0)return null;
+  var root=Math.sqrt(discriminant);
+  var t1=(-b-root)/2,t2=(-b+root)/2;
+  var t=t1>0.15?t1:(t2>0.15?t2:null);
+  if(t===null)return null;
+  var point=origin.clone().add(direction.clone().multiplyScalar(t));
+  return {t:t,point:point,normal:point.clone().sub(center).normalize(),coin:true};
+}
+
+function setApparentCoinVisible(water,visible){
+  if(visible&&!water.userData.coinHit)return;
+  water.traverse(function(o){
+    if(o.userData.isApparentCoin||o.userData.isApparentDepthLine||o.userData.isApparentDepthLabel||o.geometry?.type==='TorusGeometry'&&o.material?.color?.getHex?.()===0x8fffff){o.visible=visible}
+  });
+}
+
+function showTIRPoint(water,worldPoint){
+  if(!water.userData.coinHit)return;
+  var localPoint=water.worldToLocal(worldPoint.clone());
+  var marker=water.userData.tirMarker;
+  if(!marker){
+    marker=new THREE.Group();
+    var glow=new THREE.Mesh(new THREE.SphereGeometry(0.3,16,16),new THREE.MeshBasicMaterial({color:0xff174f,transparent:true,opacity:0.16}));
+    marker.add(glow);
+    var dot=new THREE.Mesh(new THREE.SphereGeometry(0.16,16,16),new THREE.MeshBasicMaterial({color:0xff3b5c}));
+    marker.add(dot);
+    var c=document.createElement('canvas');c.width=512;c.height=80;
+    var ctx=c.getContext('2d');ctx.font='bold 25px Inter, sans-serif';ctx.fillStyle='#ff6680';ctx.textAlign='center';ctx.fillText('TIR: no ray exits',256,42);
+    var text=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));
+    text.position.set(0,0.45,0);text.scale.set(2.4,0.38,1);marker.add(text);
+    marker.userData.isTIRMarker=true;water.add(marker);water.userData.tirMarker=marker;
+  }
+  marker.position.copy(localPoint);marker.visible=true;
+}
+
+function intersectPrism(origin, direction, el){
+  var center = el.getWorldPosition(new THREE.Vector3());
+  var rad = THREE.MathUtils.degToRad(el.userData.angle || 0);
+  var size = el.userData.size || 1;
+  var cos = Math.cos(rad), sin = Math.sin(rad);
+  var rel = origin.clone().sub(center);
+  var ro = new THREE.Vector2(
+    (cos * rel.x + sin * rel.y) / size,
+    (-sin * rel.x + cos * rel.y) / size
+  );
+  var rd = new THREE.Vector2(
+    (cos * direction.x + sin * direction.y) / size,
+    (-sin * direction.x + cos * direction.y) / size
+  );
+  var vertices = [
+    new THREE.Vector2(-1.5, -1),
+    new THREE.Vector2(1.5, -1),
+    new THREE.Vector2(0, 1.6)
+  ];
+  var bestT = Infinity, bestNormal = null;
+  for(var i = 0; i < vertices.length; i++){
+    var a = vertices[i], b = vertices[(i + 1) % vertices.length];
+    var edge = b.clone().sub(a);
+    var fromEdge = a.clone().sub(ro);
+    var cross = rd.x * edge.y - rd.y * edge.x;
+    if(Math.abs(cross) < 1e-8) continue;
+    var t = (fromEdge.x * edge.y - fromEdge.y * edge.x) / cross;
+    var u = (fromEdge.x * rd.y - fromEdge.y * rd.x) / cross;
+    if(t > 0.15 && u >= 0 && u <= 1 && t < bestT){
+      bestT = t;
+      // Vertices are counter-clockwise, so this is the outward normal.
+      var localNormal = new THREE.Vector2(edge.y, -edge.x).normalize();
+      bestNormal = new THREE.Vector3(
+        cos * localNormal.x - sin * localNormal.y,
+        sin * localNormal.x + cos * localNormal.y,
+        0
+      ).normalize();
+    }
+  }
+  if(bestNormal === null) return null;
+  return {
+    t: bestT,
+    point: origin.clone().add(direction.clone().multiplyScalar(bestT)),
+    normal: bestNormal
+  };
+}
+
+function traceAllRays(){
+  clearTracedRays();
+  opticalEvents={};
+  ST.elements.forEach(function(el){
+    if(el.userData.type==='water'){
+      el.userData.coinHit=false;
+      setApparentCoinVisible(el,false);
+      if(el.userData.tirMarker)el.userData.tirMarker.visible=false;
+    }
+  });
+  ST.elements.forEach(function(el){
+    if(el.userData.type!=='light')return;
+    var lp = el.getWorldPosition(new THREE.Vector3());
+    var angle = el.userData.angle || 0;
+    var rad = THREE.MathUtils.degToRad(angle);
+    var dir = new THREE.Vector3(Math.cos(rad), Math.sin(rad), 0);
+    var bLen = el.userData.beamLength || 12;
+    var bCol = el.userData.beamColor ? new THREE.Color(el.userData.beamColor) : new THREE.Color(0xffff00);
+    castRay(lp, dir, Math.max(bLen, 25), bCol, 0, 1.0, null);
+  });
+  computeImageMarkers();
+}
+
+function castRay(origin, direction, maxLen, color, depth, mediumIndex, activeElId){
+  if(depth > 10) return;
+  var closestT = maxLen + 1, closestEl = null, closestHit = null, closestNormal = null;
+  var closestIsCoin = false;
+  var origin2 = origin.clone();
+
+  ST.elements.forEach(function(el){
+    if(el.userData.type === 'light') return;
+    var hit = null;
+
+    if(el.userData.type === 'mirror' || el.userData.type === 'lens'){
+      hit = intersectPlaneElement(el, origin2, direction);
+    } else if(el.userData.type === 'prism'){
+      hit = intersectPrism(origin2, direction, el);
+    } else if(el.userData.type === 'water'){
+      var center = el.getWorldPosition(new THREE.Vector3());
+      hit = intersectBox(origin2, direction, center, el.userData.width * el.scale.x / 2, el.userData.depth * el.scale.y / 2, el.userData.angle || 0);
+      var coin=null;
+      el.traverse(function(o){if(o.userData.isCoin)coin=o});
+      if(coin){
+        var coinCenter=coin.getWorldPosition(new THREE.Vector3());
+        var coinHit=intersectCoin(origin2,direction,coinCenter,0.45*el.scale.x);
+        if(coinHit&&(!hit||coinHit.t<hit.t))hit=coinHit;
+      }
+    } else if(el.userData.type === 'block'){
+      var center = el.getWorldPosition(new THREE.Vector3());
+      // Match the rendered BoxGeometry(2, 2.5, 1.5), including its size slider.
+      hit = intersectBox(origin2, direction, center, el.scale.x, el.scale.y * 1.25, el.userData.angle || 0);
+    }
+
+    if(hit && hit.t > 0.15 && hit.t < closestT){
+      closestT = hit.t;
+      closestEl = el;
+      closestHit = hit.point;
+      closestNormal = hit.normal;
+      closestIsCoin = !!hit.coin;
+    }
+  });
+
+  if(closestEl && closestHit && closestT <= maxLen){
+    var elType = closestEl.userData.type;
+    var elSub = closestEl.userData.subtype;
+    // Keep the incident path in air white; dispersion starts after entry.
+    var incidentColor = elType === 'prism' ? new THREE.Color(0xffffff) : color;
+    drawTracedRay(origin2, closestHit, incidentColor, 2);
+    var remaining = maxLen - closestT;
+    var sameObject = activeElId !== null && closestEl.userData.id === activeElId;
+
+    if(elType === 'mirror'){
+      var normal = closestNormal.clone();
+      var reflected = reflectVector(direction, normal);
+      if(elSub === 'concave'){
+        var center = closestEl.getWorldPosition(new THREE.Vector3());
+        var local = closestHit.clone().sub(center);
+        var focusDir = new THREE.Vector3(-1, local.y * 0.18, 0).normalize();
+        reflected = reflectVector(direction, normal).add(focusDir.multiplyScalar(0.28)).normalize();
+      }
+      recordOpticalEvent(closestEl, closestHit, reflected);
+      castRay(closestHit, reflected, remaining * 0.9, color, depth + 1, mediumIndex, null);
+    } else if(elType === 'lens'){
+      var lensCenter = closestEl.getWorldPosition(new THREE.Vector3());
+      var lensAngle = THREE.MathUtils.degToRad(closestEl.userData.angle || 0);
+      var out = lensBend(direction, closestHit, lensCenter, lensAngle, elSub);
+      recordOpticalEvent(closestEl, closestHit, out);
+      castRay(closestHit, out, remaining * 0.8, color, depth + 1, mediumIndex, null);
+    } else if(elType === 'prism'){
+      // Real prism behavior: the beam bends on entry, spreads inside the glass,
+      // then exits through the second face with a wider rainbow fan.
+      var entryNormal = closestNormal.clone();
+      var colors = [
+        // Use a modest index range for visible separation inside the glass;
+        // the larger fan is added only after the rays exit.
+        { hex: 0xff4d4d, n: 1.50 },
+        { hex: 0xff9f43, n: 1.51 },
+        { hex: 0xffe066, n: 1.52 },
+        { hex: 0x4de38b, n: 1.53 },
+        { hex: 0x3ec9ff, n: 1.54 },
+        { hex: 0x6b7cff, n: 1.55 },
+        { hex: 0xc77dff, n: 1.56 }
+      ];
+
+      var boundaryInset = 0.04;
+      var refractedInside = null;
+
+      for (var i = 0; i < colors.length; i++) {
+        var colorInfo = colors[i];
+        var insideDir = refractVector(direction, entryNormal, 1.0, colorInfo.n);
+        if (!insideDir) {
+          continue;
+        }
+        var entryTurnSign = Math.sign(direction.cross(insideDir).z) || 1;
+        var insideOffset = (i - (colors.length - 1) / 2) * 0.008 * entryTurnSign;
+        insideDir.applyAxisAngle(new THREE.Vector3(0, 0, 1), insideOffset).normalize();
+
+        // Start just inside the entry face so the next intersection finds the
+        // actual exit face rather than immediately hitting the face we entered.
+        var insideStart = closestHit.clone().add(insideDir.clone().multiplyScalar(boundaryInset));
+        var exitHit = intersectPrism(insideStart, insideDir, closestEl);
+        var exitPoint = exitHit
+          ? exitHit.point.clone()
+          : insideStart.clone().add(insideDir.clone().multiplyScalar(2.0));
+        var exitNormal = exitHit ? exitHit.normal.clone() : entryNormal.clone().negate();
+        var insideEnd = exitPoint.clone().sub(insideDir.clone().multiplyScalar(boundaryInset));
+        // The prism is only a few world units wide, so add a small visual
+        // offset to keep the otherwise-overlapping internal colors visible.
+        var insideSide = new THREE.Vector3(-insideDir.y, insideDir.x, 0).normalize();
+        var insideVisualOffset = (i - (colors.length - 1) / 2) * 0.025;
+        insideStart.add(insideSide.clone().multiplyScalar(insideVisualOffset));
+        insideEnd.add(insideSide.clone().multiplyScalar(insideVisualOffset));
+        drawTracedRay(insideStart, insideEnd, new THREE.Color(colorInfo.hex), 2);
+
+        // Refract through the actual exit face. Using the real face normal
+        // keeps the spectrum correct when the prism is moved or rotated.
+        var exitDir = refractVector(insideDir, exitNormal, colorInfo.n, 1.0);
+        if (!exitDir) {
+          // Keep the educational visualization continuous even when a steep
+          // ray would undergo total internal reflection in the ideal model.
+          exitDir = exitNormal.clone().multiplyScalar(0.85)
+            .add(insideDir.clone().multiplyScalar(0.15)).normalize();
+        }
+        // The outgoing ray must point away from the exit face. This guard
+        // prevents a failed/steep refraction from reflecting back into glass.
+        if (exitDir.dot(exitNormal) < 0) {
+          exitDir.negate();
+        }
+        if (exitDir) {
+          // Dispersion is much easier to see in air after the exit. Spread
+          // longer wavelengths less and shorter wavelengths more, following
+          // the direction in which the prism already deviated the beam.
+          var turnSign = Math.sign(direction.cross(exitDir).z) || 1;
+          var colorOffset = (i - (colors.length - 1) / 2) * 0.05 * turnSign;
+          exitDir.applyAxisAngle(new THREE.Vector3(0, 0, 1), colorOffset).normalize();
+          var exitOrigin = exitPoint.clone().add(exitDir.clone().multiplyScalar(0.12));
+          var exitDistance = exitHit ? exitHit.t : 2.0;
+          castRay(exitOrigin, exitDir, Math.max(remaining - exitDistance, 6), new THREE.Color(colorInfo.hex), depth + 1, 1.0, null);
+        }
+
+        refractedInside = insideDir;
+      }
+
+      if (!refractedInside) {
+        var reflected = reflectVector(direction, entryNormal);
+        castRay(closestHit, reflected, remaining * 0.6, color, depth + 1, mediumIndex, null);
+      }
+    } else if(elType === 'water' && closestIsCoin){
+      // The coin is opaque: reflect the ray at its surface. The reflected ray
+      // remains in water and will refract out at the water-air boundary.
+      closestEl.userData.coinHit=true;
+      var coinReflection=reflectVector(direction, closestNormal);
+      castRay(closestHit, coinReflection, remaining * 0.9, color, depth + 1, mediumIndex, closestEl.userData.id);
+    } else if(elType === 'water'){
+      if(mediumIndex === 1.0 && !sameObject){
+        var toWater = direction.clone();
+        var waterIndex = closestEl.userData.refractiveIndex || 1.33;
+        var refracted = refractVector(toWater, closestNormal, 1.0, waterIndex);
+        if(refracted){
+          castRay(closestHit, refracted, remaining * 0.75, new THREE.Color(0x00aaff), depth + 1, waterIndex, closestEl.userData.id);
+        }
+      } else if(sameObject && mediumIndex !== 1.0){
+        var outWater = refractVector(direction, closestNormal, mediumIndex, 1.0);
+        if(outWater){
+          setApparentCoinVisible(closestEl,true);
+          castRay(closestHit, outWater, remaining * 0.8, new THREE.Color(0x00aaff), depth + 1, 1.0, null);
+        }else{
+          // Above the critical angle, water-to-air transmission is impossible.
+          // Reflect the ray internally according to the law of reflection.
+          setApparentCoinVisible(closestEl,false);
+          showTIRPoint(closestEl,closestHit);
+          var waterReflection = reflectVector(direction, closestNormal);
+          castRay(closestHit, waterReflection, remaining * 0.8, new THREE.Color(0x00aaff), depth + 1, mediumIndex, closestEl.userData.id);
+        }
+      }
+    } else if(elType === 'block'){
+      // Parallel-sided glass slab: air (n=1.0) -> glass (n=1.8) -> air
+      // (n=1.0). Each interface uses Snell's law, so the emergent ray is
+      // parallel to the incident ray and only laterally displaced.
+      if(mediumIndex === 1.0 && !sameObject){
+        var enterGlass = refractVector(direction, closestNormal, 1.0, 1.8);
+        if(enterGlass){
+          castRay(closestHit, enterGlass, remaining * 0.72, new THREE.Color(0xd8ecff), depth + 1, 1.8, closestEl.userData.id);
+        }
+      } else if(sameObject && mediumIndex !== 1.0){
+        var exitGlass = refractVector(direction, closestNormal, mediumIndex, 1.0);
+        if(exitGlass){
+          castRay(closestHit, exitGlass, remaining * 0.82, new THREE.Color(0xd8ecff), depth + 1, 1.0, null);
+        }else{
+          // Snell's law has no transmitted solution above the critical angle:
+          // reflect the ray internally instead of silently terminating it.
+          var internalReflection = reflectVector(direction, closestNormal);
+          castRay(closestHit, internalReflection, remaining * 0.82, new THREE.Color(0xd8ecff), depth + 1, mediumIndex, closestEl.userData.id);
+        }
+      }
+    }
+  } else {
+    var endPoint = origin2.clone().add(direction.clone().multiplyScalar(maxLen));
+    drawTracedRay(origin2, endPoint, color, 2);
+  }
+}
+
+function getElNormal(el, point){
+  var type = el.userData.type;
+  var angle = el.userData.angle || 0;
+  var rad = THREE.MathUtils.degToRad(angle);
+  if(type === 'water') return new THREE.Vector3(0, 1, 0);
+  if(type === 'prism') return new THREE.Vector3(0, 0, 1);
+  return new THREE.Vector3(Math.cos(rad), Math.sin(rad), 0).normalize();
+}
+
+function drawTracedRay(from, to, color, width){
+  var geo = new THREE.BufferGeometry().setFromPoints([from.clone(), to.clone()]);
+  // Wide energy glow
+  var glowMat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.25, linewidth: Math.max(width || 2, 6) });
+  var glow = new THREE.Line(geo.clone(), glowMat);
+  ST.scene.add(glow);
+  tracedRays.push(glow);
+  // Secondary glow layer (brighter, thinner)
+  var glow2Mat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15, linewidth: 2 });
+  var glow2 = new THREE.Line(geo.clone(), glow2Mat);
+  ST.scene.add(glow2);
+  tracedRays.push(glow2);
+
+  var mat = new THREE.LineBasicMaterial({ color: color, transparent: false, opacity: 1.0, linewidth: width || 2 });
+  var line = new THREE.Line(geo, mat);
+  ST.scene.add(line);
+  tracedRays.push(line);
+  // Robotic energy arrow head
+  var dir = to.clone().sub(from).normalize();
+  var arrow = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.28, 6), new THREE.MeshBasicMaterial({ color: color }));
+  arrow.position.copy(to);
+  arrow.rotation.z = -Math.atan2(dir.y, dir.x) - Math.PI / 2;
+  ST.scene.add(arrow);
+  tracedRays.push(arrow);
+  // Arrow glow ring
+  var ringGeo = new THREE.RingGeometry(0.08, 0.14, 8);
+  var ringMat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.35, side: THREE.DoubleSide });
+  var ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.position.copy(to);ring.rotation.z = -Math.atan2(dir.y, dir.x);
+  ST.scene.add(ring);
+  tracedRays.push(ring);
+}
+
+// ===== ACTIONS =====
+function rotateSelected(d){if(!ST.selectedEl)return;ST.selectedEl.userData.angle=(ST.selectedEl.userData.angle||0)+d;ST.selectedEl.rotation.z=THREE.MathUtils.degToRad(ST.selectedEl.userData.angle);showProps(ST.selectedEl);traceAllRays()}
+function deleteSelected(){if(!ST.selectedEl)return;ST.scene.remove(ST.selectedEl);ST.elements=ST.elements.filter(function(e){return e!==ST.selectedEl});ST.lights=ST.lights.filter(function(e){return e!==ST.selectedEl});ST.selectedEl=null;closeProps();toast('🗑 Deleted');traceAllRays()}
+function duplicateSelected(){if(!ST.selectedEl)return;var d=ST.selectedEl.userData;addElement(d.type,ST.selectedEl.position.x+2,ST.selectedEl.position.y,0,d.angle,d.subtype);toast('📋 Duplicated')}
+function clearAll(){ST.elements.forEach(function(e){ST.scene.remove(e)});ST.elements=[];ST.lights=[];clearPresetObjs();clearTracedRays();clearImageMarkers();opticalEvents={};ST.selectedEl=null;closeProps();toast('🗑 Cleared')}
+function undoAction(){toast('↩ Undo (use Clear to start fresh)')}
+
+// ===== STUDY CENTER =====
+
+// ---- Quick-reference glossary of every tool in the toolbar ----
+var TOOL_GLOSSARY=[
+  {ic:'💡',name:'Light Source',def:'Sends out a single straight ray of light until it hits an object or leaves the scene — like a laser pointer or a torch.'},
+  {ic:'🪞',name:'Plane Mirror',def:'A flat reflecting surface. It always makes a virtual, upright, same-size, left-right reversed image.'},
+  {ic:'🔮',name:'Concave Mirror',def:'Curves inward like the inside of a spoon. Converges parallel rays to a real focus point — used in torches and telescopes.'},
+  {ic:'🪞',name:'Convex Mirror',def:'Curves outward like the back of a spoon. Spreads rays apart for a wide, shrunken view — used in car and shop mirrors.'},
+  {ic:'🔍',name:'Convex Lens',def:'Thicker in the middle. Converges (bends together) parallel rays to a focus — used in magnifying glasses and cameras.'},
+  {ic:'🔎',name:'Concave Lens',def:'Thinner in the middle. Diverges (spreads apart) parallel rays — used in glasses for short-sightedness.'},
+  {ic:'🌊',name:'Water',def:'A refracting medium (n ≈ 1.33) that bends light as it enters or leaves, creating effects like apparent depth.'},
+  {ic:'🧊',name:'Glass Block',def:'A dense refracting medium (n ≈ 1.5). Beyond its critical angle it produces total internal reflection instead of letting light out.'}
+];
+
+// ---- Definition + real experiment for every preset you built ----
+var PRESET_GUIDE=[
+  {tag:'Preset 1',title:'🏦 Periscope',color:'#00d4ff',presetIdx:0,
+   def:'A periscope is an optical instrument made of two <strong>plane mirrors</strong> mounted parallel to each other, each tilted 45° to the light path, used to see over or around an obstacle without being seen yourself.',
+   how:'Light travels horizontally into the top mirror, which is tilted 45° so it reflects the ray straight down. The ray then hits the second mirror — also at 45° — which reflects it out horizontally again, shifted sideways but still pointing the same direction.',
+   steps:['Open Presets and load 🏦 Periscope.','Follow the yellow ray from the light, down through the first mirror, then out through the second.','Select a mirror and rotate it a little — watch the ray path break and re-aim.','Now build your own periscope from scratch using two Plane Mirror tools at 45°/-45°.']},
+  {tag:'Preset 2',title:'🔬 Telescope',color:'#8b5cf6',presetIdx:1,
+   def:'A simple reflecting telescope uses a large <strong>concave mirror</strong> (the objective) to gather and focus light from a distant object, then a <strong>convex lens</strong> (the eyepiece) to magnify that focused image for your eye.',
+   how:'Parallel rays from something far away hit the wide concave mirror and converge toward its focus. Before they fully cross, a convex eyepiece lens intercepts them and bends them again so they leave almost parallel — but now spread over a wider angle, which is what makes the object look bigger.',
+   steps:['Load 🔬 Telescope from Presets.','Trace the white ray into the concave mirror, then the yellow ray into the convex lens.','Drag the eyepiece lens closer to and further from the mirror — notice the exit ray angle change.','Compare this to a single Magnifying Glass preset — a telescope adds a second stage of bending.']},
+  {tag:'Preset 3',title:"🌈 Newton's Prism",color:'#ec4899',presetIdx:2,
+   def:'A prism is a triangular block of glass. When white light enters it, each color inside the light bends by a slightly different amount — a process called <strong>dispersion</strong> — splitting the beam into a rainbow (ROYGBIV).',
+   how:'White light refracts once entering the angled glass face and again leaving the second face. Violet light slows down and bends the most because glass has a slightly higher refractive index for shorter wavelengths; red bends the least. The two refractions add up, fanning the colors apart.',
+   steps:['Load 🌈 Newton\'s Prism from Presets.','Watch the white beam enter and seven colored rays fan out on exit.','Notice violet bends furthest from the original path and red bends least.','Try changing the incoming light\'s height to see the spread shift.']},
+  {tag:'Preset 4',title:'🌊 Apparent Depth',color:'#10b981',presetIdx:3,
+   def:'Apparent depth is the illusion that an underwater object is shallower (closer to the surface) than it really is, caused by refraction as light exits water into air on its way to your eye.',
+   how:'A ray traveling from air down into water bends toward the normal (water is denser). Some light also reflects straight off the surface. Your brain assumes light always travels in straight lines, so it traces the refracted ray backward in a straight line — placing the image higher (shallower) than the real object.',
+   steps:['Load 🌊 Apparent Depth from Presets.','Compare the red incident ray, the yellow reflected ray, and the green refracted ray.','Note how the refracted ray bends toward the normal as it enters the water.','Swap the water for a Glass block and see the bend change with the new refractive index.']},
+  {tag:'Preset 5',title:'🔍 Magnifying Glass',color:'#f59e0b',presetIdx:4,
+   def:'A magnifying glass is a single <strong>convex lens</strong> held closer to an object than its focal length, producing an enlarged, upright, virtual image that appears to sit on the same side as the object.',
+   how:'Rays leaving the object pass through the lens and bend toward each other, but because the object is inside the focal length they never actually converge on the far side — instead they leave the lens diverging. Your eye extends those diverging rays backward and "sees" a bigger, upright image behind the object.',
+   steps:['Load 🔍 Magnifying Glass from Presets.','Watch the yellow object rays bend into green diverging rays after the lens.','Drag the object closer to the lens (inside F) and further away (outside F) using the sandbox tool.','Compare what happens once the object passes beyond the focal point — the image flips real and inverted.']},
+  {tag:'Preset 6',title:'💡 Flashlight Reflector',color:'#00d4ff',presetIdx:5,
+   def:'A flashlight (or car headlight) reflector is a <strong>concave mirror</strong> shaped so a bulb placed at its focus sends out light that reflects into a tight, nearly parallel beam instead of spreading in every direction.',
+   how:'Placed exactly at the focus of the concave mirror, every ray leaving the bulb hits the curved surface at a different point but reflects out parallel to the mirror\'s axis — the reverse of how a concave mirror focuses incoming parallel light to a single point.',
+   steps:['Load 💡 Flashlight Reflector from Presets.','Follow the three yellow rays leaving the bulb and the three green rays leaving the mirror.','Notice the green rays exit almost perfectly parallel — that\'s the "beam".','Swap in a Convex mirror instead and see the beam spread out rather than focus.']}
+];
+
+// ---- Certificate tiers, unlocked by overall quiz percentage ----
+var CERT_TIERS=[
+  {min:95,cls:'tier-platinum',badge:'💎',name:'Platinum Optics Master',copy:'has mastered every corner of the Optics Explorer course with a near-flawless quiz record.'},
+  {min:85,cls:'tier-gold',badge:'🥇',name:'Gold Light Physicist',copy:'has completed the Optics Explorer course with an excellent understanding of light and optics.'},
+  {min:70,cls:'tier-silver',badge:'🥈',name:'Silver Optics Scholar',copy:'has completed the Optics Explorer course with a solid, dependable grasp of the material.'},
+  {min:50,cls:'tier-bronze',badge:'🥉',name:'Bronze Explorer',copy:'has completed the Optics Explorer course and is well on the way to mastering optics.'},
+  {min:0,cls:'tier-apprentice',badge:'🎓',name:'Optics Apprentice',copy:'has completed the Optics Explorer course and earned a certificate of participation.'}
+];
+
+var studyData=[
+  {icon:'🪞',title:'Reflection',color:'#00d4ff',summary:'How light bounces from surfaces.',
+   notes:'<h3>Light likes to bounce! 🪞</h3><h4>The big idea</h4><p>When a ray meets a shiny surface, it reflects. The angle it arrives at equals the angle it leaves, measured from the normal (an imaginary line perpendicular to the surface).</p><h4>Remember</h4><p><strong>Angle of incidence = angle of reflection</strong><br>θᵢ = θᵣ</p><div class="definition-box"><strong>Definition:</strong> Reflection is the bouncing back of light when it strikes a boundary instead of passing through it.</div><div class="fun-fact">💡 Fun fact: A smooth mirror reflects a clear image, while a rough wall scatters light in many directions (that\'s why walls aren\'t shiny).</div><div class="experiment-box"><h4>🔬 Try this experiment</h4><ol><li>Load the 🏦 Periscope preset and trace the ray through both mirrors.</li><li>Select a mirror and rotate it — watch how the reflected ray changes angle.</li><li>Add a second light and see two rays reflect off the same mirror.</li></ol><button class="load-btn" style="--pg-color:#00d4ff" onclick="studyLoadPreset(0)">🚀 Load Periscope in Sandbox</button></div>',
+   quiz:[
+     ['A ray hits a mirror at 30° from the normal. What is its reflection angle?',['15°','30°','60°','90°'],1,'Angle of incidence always equals angle of reflection.'],
+     ['Which line is used to measure reflection angles?',['The mirror surface','The normal','The horizon','The ray color'],1,'It\'s the imaginary line perpendicular to the surface.'],
+     ['What kind of image does a plane mirror always form?',['Real, inverted, same size','Virtual, upright, same size','Virtual, upright, magnified','Real, upright, smaller'],1,'Think about looking at your own reflection.'],
+     ['A periscope uses two mirrors set at what angle to redirect light around a corner?',['90°','30°','45°','60°'],2,'Check the labels in the Periscope preset you loaded.'],
+     ['Which curved mirror always produces a smaller, upright, virtual image with a wide field of view?',['Concave mirror','Convex mirror','Plane mirror','Prism mirror'],1,'It\'s the type used for car side mirrors.']
+   ]},
+  {icon:'🔍',title:'Lenses',color:'#8b5cf6',summary:'How curved glass bends and focuses rays.',
+   notes:'<h3>Glass can steer light! 🔍</h3><h4>Convex lenses</h4><p>A convex lens is thicker in the middle. It makes parallel rays meet at a <strong>focus</strong> and is used in magnifying glasses and cameras.</p><h4>Concave lenses</h4><p>A concave lens is thinner in the middle. It spreads rays apart, as if they came from a virtual focus.</p><div class="definition-box"><strong>Definition:</strong> A lens is a transparent object with at least one curved surface that refracts light to converge or diverge it.</div><div class="fun-fact">🌟 Fun fact: Your eye uses a flexible lens to focus a sharp picture on the retina.</div><div class="experiment-box"><h4>🔬 Try this experiment</h4><ol><li>Load the 🔍 Magnifying Glass preset and watch the rays bend outward after the lens.</li><li>Move a Convex Lens tool\'s object closer than the focal length, then farther away.</li><li>Swap it for a Concave Lens and compare how the rays spread instead of converge.</li></ol><button class="load-btn" style="--pg-color:#8b5cf6" onclick="studyLoadPreset(4)">🚀 Load Magnifying Glass in Sandbox</button></div>',
+   quiz:[
+     ['Which lens brings parallel rays together at a focus?',['Convex','Concave','Flat','Opaque'],0,'It\'s thicker in the middle.'],
+     ['What is the point where refracted rays meet (or appear to meet) called?',['The normal','The center','The focus','The edge'],2,''],
+     ['To use a convex lens as a magnifying glass, where must the object be placed?',['Beyond 2F','Exactly at F','Within the focal length F','Behind the lens'],2,'Recall the Magnifying Glass preset — the object sits close to the lens.'],
+     ['Which lens is thinner in the middle and always forms a smaller virtual image?',['Convex lens','Concave lens','Concave mirror','Prism'],1,''],
+     ['A telescope preset pairs a concave objective mirror with which second element?',['A concave lens','A convex lens (eyepiece)','A plane mirror','A glass block'],1,'Look at what sits beside the mirror in the Telescope preset.']
+   ]},
+  {icon:'🌈',title:'Prisms & Colors',color:'#ec4899',summary:'How white light separates into a rainbow.',
+   notes:'<h3>White light hides a rainbow! 🌈</h3><h4>Dispersion</h4><p>A prism refracts different colors by different amounts. Violet bends the most and red bends the least, spreading white light into its spectrum.</p><h4>Color order</h4><p>Red, Orange, Yellow, Green, Blue, Indigo, Violet — remember <strong>ROYGBIV</strong>.</p><div class="definition-box"><strong>Definition:</strong> Dispersion is the splitting of white light into its component colors because each wavelength refracts by a slightly different amount.</div><div class="fun-fact">🎨 Fun fact: A rainbow appears when sunlight is refracted, reflected, and dispersed inside raindrops.</div><div class="experiment-box"><h4>🔬 Try this experiment</h4><ol><li>Load the 🌈 Newton\'s Prism preset.</li><li>Follow each colored ray from inside the glass to where it exits and fans out.</li><li>Change the incoming light\'s height and watch the whole rainbow shift.</li></ol><button class="load-btn" style="--pg-color:#ec4899" onclick="studyLoadPreset(2)">🚀 Load Prism in Sandbox</button></div>',
+   quiz:[
+     ['Which color bends the most passing through a glass prism?',['Red','Green','Yellow','Violet'],3,''],
+     ['What is splitting white light into colors called?',['Reflection','Dispersion','Absorption','Shadow'],1,''],
+     ['ROYGBIV is the order of…',['Refraction angles','Spectrum colors from red to violet','Reflection strength','Lens focal lengths'],1,''],
+     ['Why does a prism split white light into colors?',['Each color has a slightly different refractive index in glass','Glass changes color randomly','Only red light can enter glass','Prisms add color'],0,''],
+     ['A natural rainbow forms because sunlight is refracted, dispersed, and ____ inside raindrops.',['absorbed','reflected','frozen','ignored'],1,'The light needs to come back out toward your eyes.']
+   ]},
+  {icon:'🌊',title:'Water & Refraction',color:'#10b981',summary:'Why light changes direction between materials.',
+   notes:'<h3>Light changes its path! 🌊</h3><h4>Refraction</h4><p>When light crosses from air into water or glass, its speed changes and the ray bends. It bends <strong>toward the normal</strong> entering a denser material and away leaving it.</p><h4>Snell\'s law</h4><p>n₁ sin θ₁ = n₂ sin θ₂</p><div class="definition-box"><strong>Definition:</strong> Refraction is the bending of light as it crosses a boundary between two materials with different refractive indices.</div><div class="fun-fact">🐟 Fun fact: A coin under water looks closer to the surface because refracted light tricks our eyes — this is called apparent depth.</div><div class="experiment-box"><h4>🔬 Try this experiment</h4><ol><li>Load the 🌊 Apparent Depth preset.</li><li>Compare the incident, reflected, and refracted rays at the water surface.</li><li>Add a Glass block instead and compare how much more the ray bends.</li></ol><button class="load-btn" style="--pg-color:#10b981" onclick="studyLoadPreset(3)">🚀 Load Apparent Depth in Sandbox</button></div>',
+   quiz:[
+     ['Water has an approximate refractive index of…',['1.00','1.33','2.42','10.0'],1,''],
+     ['Entering glass from air, light usually bends…',['Toward the normal','Away from the normal','Into darkness','Back to the source'],0,'Glass is denser than air.'],
+     ['Why does a coin in a bowl of water appear closer to the surface than it really is?',['Apparent depth from refraction','The water changes the coin\'s size','Light stops at the surface','Reflection only'],0,''],
+     ['Snell\'s Law is written as…',['n₁ sin θ₁ = n₂ sin θ₂','n₁ + θ₁ = n₂ + θ₂','n₁ / θ₁ = n₂ / θ₂','θ₁ = θ₂ always'],0,''],
+     ['In the Apparent Depth preset, which ray bounces straight back off the surface?',['The refracted ray','The reflected ray','The incident ray only','There is no such ray'],1,'']
+   ]},
+  {icon:'💎',title:'Glass & TIR',color:'#f59e0b',summary:'Critical angles, glass, and total internal reflection.',
+   notes:'<h3>When light gets trapped inside! 💎</h3><h4>Total internal reflection</h4><p>Light traveling from a denser material to a rarer one can reflect completely inside if its angle is greater than the <strong>critical angle</strong>.</p><h4>Where it helps</h4><p>Fiber-optic cables use repeated total internal reflection to carry internet signals around corners.</p><div class="definition-box"><strong>Definition:</strong> Total internal reflection (TIR) is when 100% of light reflects back inside a denser medium instead of refracting out, because it strikes the boundary beyond the critical angle.</div><div class="fun-fact">✨ Fun fact: Diamonds sparkle brilliantly because their high refractive index makes total internal reflection very easy to trigger.</div><div class="experiment-box"><h4>🔬 Try this experiment</h4><ol><li>Place a Glass Block tool in the Sandbox.</li><li>Aim a light at shallow, medium, and steep angles into one face.</li><li>Watch for the angle where the exit ray disappears and TIR takes over.</li></ol><button class="load-btn" style="--pg-color:#f59e0b" onclick="studyTryTool(&quot;block&quot;)">🧪 Try Glass Block in Sandbox</button></div>',
+   quiz:[
+     ['Total internal reflection needs light to travel from…',['Rarer to denser','Denser to rarer','Air to vacuum only','Any material'],1,''],
+     ['Which technology uses total internal reflection to carry signals?',['Fiber optics','Paper','Magnets','Thermometers'],0,''],
+     ['What happens exactly at the critical angle?',['Light disappears completely','The refracted ray skims along the boundary surface','Light speeds up infinitely','Nothing happens'],1,''],
+     ['Roughly what is the critical angle for glass-to-air (n ≈ 1.5)?',['12°','42°','67°','90°'],1,''],
+     ['Why do diamonds sparkle so brilliantly?',['They are always polished flat','Their small critical angle makes TIR easy to trigger','They glow on their own','They refract sound waves'],1,'']
+   ]},
+  {icon:'🧰',title:'Optical Instruments',color:'#06b6d4',summary:'Real devices built from mirrors and lenses: periscopes, telescopes and more.',
+   notes:'<h3>Real gadgets made of light! 🧰</h3><h4>Combining simple parts</h4><p>Every optical instrument you meet in daily life — periscopes, telescopes, magnifying glasses, flashlights — is just a clever arrangement of the same basic parts: mirrors and lenses.</p><div class="definition-box"><strong>Periscope:</strong> two plane mirrors at 45° that shift a line of sight around a corner without changing its direction.<br><strong>Telescope:</strong> a concave mirror plus a convex eyepiece lens that magnifies distant objects.<br><strong>Magnifying glass:</strong> a single convex lens held inside its focal length to enlarge nearby objects.<br><strong>Flashlight reflector:</strong> a concave mirror behind a bulb that turns spreading light into a focused beam.</div><div class="fun-fact">🚢 Fun fact: Submarines use periscopes so the crew can see the surface while staying hidden underwater.</div><div class="experiment-box"><h4>🔬 Try all four</h4><ol><li>Load 🏦 Periscope and 🔬 Telescope from Presets and compare their ray paths.</li><li>Load 🔍 Magnifying Glass and 💡 Flashlight Reflector — one spreads rays, one focuses them.</li><li>Notice both the telescope and flashlight start from a concave mirror — but use it in opposite ways!</li></ol><div class="pa" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem"><button class="load-btn" style="--pg-color:#06b6d4" onclick="studyLoadPreset(0)">🏦 Periscope</button><button class="load-btn" style="--pg-color:#06b6d4" onclick="studyLoadPreset(1)">🔬 Telescope</button><button class="load-btn" style="--pg-color:#06b6d4" onclick="studyLoadPreset(4)">🔍 Magnifier</button><button class="load-btn" style="--pg-color:#06b6d4" onclick="studyLoadPreset(5)">💡 Flashlight</button></div></div>',
+   quiz:[
+     ['In a periscope, what do the two plane mirrors do?',['Magnify the image','Redirect light around a corner without bending its direction','Split light into colors','Focus light to a point'],1,''],
+     ['What angle are periscope mirrors typically tilted at?',['0°','45°','90°','180°'],1,''],
+     ['In the Telescope preset, what collects the first light?',['A convex lens eyepiece','A concave objective mirror','A glass block','A prism'],1,''],
+     ['A flashlight reflector uses a ____ mirror behind the bulb.',['convex','plane','concave','no'],2,'It needs to focus spreading light into a beam.'],
+     ['For a magnifying glass to enlarge an object, the object must sit…',['Beyond the focal point','Exactly at 2F','Within the focal length','Behind the lens'],2,'']
+   ]}
+];
+
+var completeNotes=[
+  '<h3>Reflection of Light 🪞</h3><h4>1. What is reflection?</h4><p>Reflection is the bouncing back of light when it strikes a surface. The incoming ray is the <strong>incident ray</strong>, the outgoing ray is the <strong>reflected ray</strong>, and the perpendicular guide line is the <strong>normal</strong>.</p><h4>2. The two laws</h4><p>① The incident ray, normal, and reflected ray lie in one plane.<br>② <strong>Angle of incidence equals angle of reflection:</strong> θᵢ = θᵣ.</p><h4>3. Plane mirrors</h4><p>A plane mirror makes an image that is virtual, upright, the same size, laterally inverted, and the same distance behind the mirror as the object is in front.</p><h4>4. Curved mirrors</h4><p>A <strong>concave</strong> mirror curves inward and can make real or virtual images. A <strong>convex</strong> mirror curves outward and always makes a virtual, upright, smaller image with a wide view.</p><h4>5. Key formula</h4><p>Mirror formula: <strong>1/f = 1/v + 1/u</strong><br>Radius and focus: <strong>R = 2f</strong></p><h4>6. Real device: the periscope</h4><p>A periscope is two plane mirrors at 45° that let you see over walls or above the water line from a submarine, without shifting the direction the image points.</p><div class="fun-fact">🔦 Real life: Car headlights use concave mirrors to send light forward.</div><div class="memory-pill">🧠 Exam tip: Measure angles from the normal, never from the mirror surface.</div><div class="checklist"><strong>Try it:</strong><br>• Place a plane mirror in the Sandbox and rotate it.<br>• Put a ray near the edge of a concave mirror.<br>• Compare the wide view of a convex mirror.<br>• Load the Periscope preset and trace the full path.</div>',
+  '<h3>Lenses & Image Formation 🔍</h3><h4>1. What is refraction in a lens?</h4><p>A lens is a transparent material with curved surfaces. Light changes speed as it enters and leaves the lens, so it bends. The amount of bending depends on the material and the angle of incidence.</p><h4>2. Convex lens</h4><p>Thicker in the middle, a convex lens is <strong>converging</strong>. Parallel rays meet at the principal focus F. It can form real, inverted images or a virtual, upright magnified image.</p><h4>3. Concave lens</h4><p>Thinner in the middle, a concave lens is <strong>diverging</strong>. Rays spread out as if they came from a virtual focus. Its image is always virtual, upright, and smaller.</p><h4>4. Common convex cases</h4><p>Object beyond 2F → small, inverted, real image.<br>Object at 2F → same size, inverted, real image.<br>Object between F and 2F → large, inverted, real image.<br>Object inside F → large, upright, virtual image (magnifying glass!).</p><h4>5. Formula and power</h4><p>Lens formula: <strong>1/f = 1/v − 1/u</strong><br>Power: <strong>P = 1/f</strong> when f is in metres; unit is dioptre (D).</p><h4>6. Real devices: magnifying glass & telescope</h4><p>A <strong>magnifying glass</strong> is one convex lens used with the object inside F. A <strong>telescope</strong> stacks a concave objective mirror with a convex eyepiece lens to magnify things far away.</p><div class="fun-fact">👓 Real life: Spectacles use convex lenses for farsightedness and concave lenses for nearsightedness.</div><div class="memory-pill">🧠 Memory trick: Convex = converge; concave = cave in and spread.</div><div class="checklist"><strong>Try it:</strong><br>• Move the light across different lens edges.<br>• Test a ray through the optical centre.<br>• Put an object inside and outside F.<br>• Load the Telescope and Magnifying Glass presets.</div>',
+  '<h3>Prisms, Dispersion & Color 🌈</h3><h4>1. What a prism does</h4><p>A prism has angled faces. Light refracts at the first face and again at the second face. The final ray is deviated from its original direction.</p><h4>2. Dispersion</h4><p>White light is a mixture of colors. Glass has a slightly different refractive index for each color, so every color bends by a different amount. <strong>Violet bends most; red bends least.</strong></p><h4>3. Spectrum order</h4><p><strong>ROYGBIV</strong> = Red, Orange, Yellow, Green, Blue, Indigo, Violet. Red has the longest wavelength and violet the shortest in visible light.</p><h4>4. Why rainbows happen</h4><p>Sunlight enters a raindrop, refracts and disperses, reflects inside the drop, then refracts again as it leaves. Millions of drops together make the arc.</p><h4>5. Important vocabulary</h4><p><strong>Deviation</strong> is the change in direction. <strong>Dispersion</strong> is the separation of colors. A spectrum is the band of separated colors.</p><h4>6. Real device: Newton\'s prism</h4><p>Isaac Newton was the first to prove a prism doesn\'t add color — it simply reveals the colors already hidden in white light, then a second prism can recombine them back into white.</p><div class="fun-fact">🎨 A second rainbow has reversed color order because light reflects twice inside the drops.</div><div class="memory-pill">🧠 Remember: VIBGYOR is the reverse direction of ROYGBIV.</div><div class="checklist"><strong>Try it:</strong><br>• Send a slanted ray through the prism.<br>• Change the entry height and observe the exit direction.<br>• Look for the rainbow color spread.<br>• Load the Newton\'s Prism preset.</div>',
+  '<h3>Refraction in Water & Glass 🌊</h3><h4>1. Why light bends</h4><p>Light travels at different speeds in different materials. In vacuum it travels fastest; in water and glass it travels more slowly. A change of speed at a boundary causes refraction.</p><h4>2. Toward or away?</h4><p>Air → water/glass: the ray slows and bends <strong>toward the normal</strong>.<br>Water/glass → air: the ray speeds up and bends <strong>away from the normal</strong>.<br>A ray along the normal does not change direction.</p><h4>3. Refractive index</h4><p>Refractive index tells how much a material slows light: <strong>n = c/v</strong>. Typical values: air ≈ 1.00, water ≈ 1.33, glass ≈ 1.50.</p><h4>4. Snell\'s law</h4><p><strong>n₁ sin θ₁ = n₂ sin θ₂</strong>. Angles are measured from the normal. A bigger index difference usually means a bigger bend.</p><h4>5. Everyday examples</h4><p>A pencil looks bent in water, swimming pools look shallower, and camera lenses focus because of refraction.</p><h4>6. Apparent depth</h4><p>Because refracted light bends away from the normal as it leaves water, your brain traces it back in a straight line and places the underwater object higher than it truly is — this illusion is called <strong>apparent depth</strong>.</p><div class="fun-fact">🐟 Look at a coin in a cup, then slowly add water—the coin seems to appear from nowhere!</div><div class="memory-pill">🧠 Rule: Slow down → toward the normal; speed up → away.</div><div class="checklist"><strong>Try it:</strong><br>• Aim rays at the top and sides of the water object.<br>• Compare air-to-water and air-to-glass bending.<br>• Try a normal ray and see why it stays straight.<br>• Load the Apparent Depth preset.</div>',
+  '<h3>Glass, Critical Angle & TIR 💎</h3><h4>1. Total internal reflection</h4><p>Total internal reflection (TIR) happens only when light travels from a <strong>denser</strong> material to a <strong>rarer</strong> material and the incident angle is greater than the critical angle. No refracted ray escapes; the light reflects inside.</p><h4>2. Critical angle</h4><p>The critical angle is the angle that produces a refracted ray along the boundary: <strong>sin θc = n₂/n₁</strong>, where n₁ &gt; n₂. For glass to air with n = 1.5, θc is about 42°.</p><h4>3. Three outcomes</h4><p>Below θc → refracted and reflected rays.<br>At θc → refracted ray travels along the surface.<br>Above θc → total internal reflection.</p><h4>4. Applications</h4><p>Fiber-optic cables carry data using repeated TIR. Binoculars use prisms to turn light. Diamonds sparkle because their high index creates a small critical angle.</p><h4>5. Safety and accuracy</h4><p>TIR does not happen from air into glass, and it does not happen at every angle. Always check the direction of travel and compare the angle with θc.</p><div class="fun-fact">💎 A diamond\'s critical angle is only about 24°, so light can bounce around many times before leaving.</div><div class="memory-pill">🧠 Checklist: Dense → rare + large angle = TIR.</div><div class="checklist"><strong>Try it:</strong><br>• Send a ray into the glass block at different angles.<br>• Look for the point where the exit ray disappears.<br>• Imagine the block as a tiny fiber-optic cable.</div>',
+  '<h3>Optical Instruments: Putting It All Together 🧰</h3><h4>1. Instruments are combinations</h4><p>Every real optical instrument is just simple mirrors and lenses arranged with purpose. Once you know how one mirror or lens behaves, you can understand almost any device.</p><h4>2. Periscope</h4><p>Two plane mirrors, each tilted 45° to the light path and facing each other, shift your line of sight sideways (or up and over an obstacle) without changing its direction or flipping the image upside down.</p><h4>3. Telescope</h4><p>A wide concave objective mirror gathers a lot of light from something far away and focuses it. A smaller convex eyepiece lens then re-magnifies that focused image for your eye — the bigger the objective, the more light it can gather.</p><h4>4. Magnifying glass</h4><p>A single convex lens held within its own focal length makes nearby text or objects look larger by bending diverging rays that your eye reads as coming from a bigger image.</p><h4>5. Flashlight / headlight reflector</h4><p>Placing a bulb at the focus of a concave mirror is the reverse trick of a telescope — instead of focusing incoming parallel light to a point, it turns point-source light into an outgoing parallel beam.</p><h4>6. Why this matters</h4><p>Cameras, microscopes, projectors, and even the human eye are all built from these same two ingredients: mirrors that reflect and lenses that refract.</p><div class="fun-fact">🚢 Real life: Submarine periscopes can also include prisms and lenses to add magnification while staying hidden underwater.</div><div class="memory-pill">🧠 Memory trick: Mirrors reflect, lenses refract — every instrument is just a smart combination of the two.</div><div class="checklist"><strong>Try it:</strong><br>• Load all four instrument presets one after another.<br>• Notice the concave mirror is used two different ways (telescope vs. flashlight).<br>• Build your own instrument idea from scratch in the Sandbox.</div>'
+];
+
+var studyState={done:{},score:0,answered:{},chapterScore:{},chapterTotal:{},current:0,qIndex:0,streak:0};
+try{
+  var _loaded=JSON.parse(localStorage.getItem('opticsverseStudy')||'{}');
+  studyState.done=_loaded.done||{};
+  studyState.score=_loaded.score||0;
+  studyState.answered=_loaded.answered||{};
+  studyState.chapterScore=_loaded.chapterScore||{};
+  studyState.chapterTotal=_loaded.chapterTotal||{};
+  studyState.notes=_loaded.notes||{};
+}catch(e){
+  localStorage.removeItem('opticsverseStudy');
+}
+function saveStudyState(){localStorage.setItem('opticsverseStudy',JSON.stringify(studyState))}
+function studyLoadPreset(idx){toggleStudy();loadPreset(idx)}
+function studyTryTool(id){toggleStudy();try{selectTool(id)}catch(e){}}
+
+function setActiveStudyTab(tab){
+  document.getElementById('chaptersTab').classList.toggle('active',tab==='chapters');
+  document.getElementById('notesTab').classList.toggle('active',tab==='notes');
+  document.getElementById('flipTab').classList.toggle('active',tab==='flip');
+}
+
+function toggleStudy(){var panel=document.getElementById('studyPanel'),overlay=document.getElementById('studyOverlay');var open=!panel.classList.contains('show');panel.classList.toggle('show',open);overlay.classList.toggle('show',open);if(open){panel.scrollTop=0;renderStudyHome()}}
+function closeStudy(e){if(e.target.id==='studyOverlay')toggleStudy()}
+
+function renderStudyHome(){
+  document.getElementById('chapterGrid').style.display='grid';
+  document.getElementById('chapterView').classList.remove('show');
+  document.getElementById('notesLibrary').classList.remove('show');
+  document.getElementById('flipBookView').classList.remove('show');
+  setActiveStudyTab('chapters');
+  document.getElementById('chapterGrid').innerHTML=studyData.map(function(c,i){
+    var done=!!studyState.done[i],stars=done?(studyState.answered[i]||1):0;
+    return '<article class="chapter-card '+(done?'done':'')+'" style="--chapter-color:'+c.color+'" onclick="openChapter('+i+')"><div class="chapter-icon">'+c.icon+'</div><h3>Chapter '+(i+1)+': '+c.title+'</h3><p>'+c.summary+'</p><div class="chapter-status"><span>'+(done?'✅ Complete':'📖 Study + test')+'</span><span class="chapter-stars">'+('⭐'.repeat(stars))+('☆'.repeat(3-stars))+'</span></div></article>';
+  }).join('');
+  var count=Object.keys(studyState.done).length;
+  document.getElementById('studyProgressText').textContent=count+' / '+studyData.length+' chapters';
+  document.getElementById('studyProgressFill').style.width=(count/studyData.length*100)+'%';
+  document.getElementById('studyStars').textContent='⭐ '+studyState.score;
+}
+
+function showNotesLibrary(){
+  document.getElementById('chapterGrid').style.display='none';
+  document.getElementById('chapterView').classList.remove('show');
+  document.getElementById('flipBookView').classList.remove('show');
+  setActiveStudyTab('notes');
+  var notes=document.getElementById('notesLibrary');
+  notes.classList.add('show');
+  var glossaryHtml='<div class="glossary-intro">🧰 <strong>Every tool, defined.</strong> Here\'s a quick reference for everything on the left toolbar, plus a full field guide to every preset experiment you can load.</div>'
+    +'<h3 class="section-heading">📘 Tool Glossary</h3>'
+    +'<div class="glossary-grid">'+TOOL_GLOSSARY.map(function(t){return '<div class="glossary-item"><div class="g-ic">'+t.ic+'</div><h4>'+t.name+'</h4><p>'+t.def+'</p></div>'}).join('')+'</div>'
+    +'<h3 class="section-heading">🧪 Preset Field Guide — Definition + Experiment</h3>'
+    +'<div class="preset-guide-grid">'+PRESET_GUIDE.map(function(p){
+      return '<article class="preset-guide-card" style="--pg-color:'+p.color+'"><span class="pg-tag">'+p.tag+'</span><h3>'+p.title+'</h3>'
+      +'<div class="definition-box"><strong>Definition:</strong> '+p.def+'</div>'
+      +'<h5>How it works</h5><p>'+p.how+'</p>'
+      +'<h5>Try the experiment</h5><ol>'+p.steps.map(function(s){return '<li>'+s+'</li>'}).join('')+'</ol>'
+      +'<button class="load-btn" style="--pg-color:'+p.color+'" onclick="studyLoadPreset('+p.presetIdx+')">🚀 Load in Sandbox</button></article>';
+    }).join('')+'</div>'
+    +'<h3 class="section-heading">📝 Complete Chapter Notes</h3>'
+    +'<div class="notes-intro">🌟 <strong>Study tip:</strong> Read one card, say the memory pill out loud, then try that experiment in the Sandbox. Small steps make big discoveries!</div>'
+    +'<div class="notes-grid">'+studyData.map(function(c,i){
+      return '<article class="complete-note" style="--note-color:'+c.color+'">'+completeNotes[i]+'<div class="memory-pill">🧠 Remember: '+c.summary+'</div><div class="checklist"><label><input type="checkbox" '+(studyState.notes&&studyState.notes[i]>0?'checked':'')+' onchange="saveNoteCheck('+i+',this.checked)"> I can explain this chapter</label><label><input type="checkbox" onchange="saveNoteCheck('+i+',this.checked)"> I tried it in the Sandbox</label></div></article>';
+    }).join('')+'</div>';
+  notes.innerHTML=glossaryHtml;
+}
+
+function saveNoteCheck(i,checked){studyState.notes=studyState.notes||{};studyState.notes[i]=(studyState.notes[i]||0)+(checked?1:-1);saveStudyState()}
+
+function openChapter(i){
+  var c=studyData[i],isNewAttempt=(studyState.current!==i)||!studyState.done[i]&&(studyState.qIndex===undefined);
+  var qIndex=studyState.current===i&&studyState.qIndex?studyState.qIndex:0;
+  studyState.current=i;studyState.qIndex=qIndex;studyState.currentCorrect=0;studyState.streak=0;
+  document.getElementById('chapterGrid').style.display='none';
+  var view=document.getElementById('chapterView');
+  view.classList.add('show');
+  view.innerHTML='<button class="back-study" onclick="renderStudyHome()">← All chapters</button><div class="notes-box" style="border-color:'+c.color+'55">'+c.notes+'</div><div class="study-quiz" id="studyQuiz"></div>';
+  renderStudyQuestion(i);
+}
+
+function toggleHint(btn){var h=btn.parentElement.nextElementSibling;if(h)h.classList.toggle('show')}
+function renderStudyQuestion(i){
+  var c=studyData[i],qi=studyState.qIndex||0,q=c.quiz[qi],quiz=document.getElementById('studyQuiz');
+  if(!quiz)return;
+  var dots=c.quiz.map(function(_,n){return '<span class="quiz-dot '+(n<qi?'qd-done':n===qi?'qd-active':'')+'"></span>'}).join('');
+  quiz.innerHTML='<div class="quiz-meta"><h3 style="margin:0">🎯 Quick Check '+(qi+1)+' / '+c.quiz.length+'</h3><span class="quiz-streak">🔥 Streak: '+(studyState.streak||0)+'</span></div>'
+    +'<div class="quiz-dots">'+dots+'</div>'
+    +'<div class="study-quiz-question">'+q[0]+'</div>'
+    +q[1].map(function(o,n){return '<button class="study-quiz-option" onclick="answerStudy('+i+','+n+',this)"><span class="opt-letter">'+String.fromCharCode(65+n)+'</span>'+o+'</button>'}).join('')
+    +(q[3]?'<div class="hint-row"><button class="hint-btn" type="button" onclick="toggleHint(this)">💡 Need a hint?</button></div><div class="hint-text">'+q[3]+'</div>':'')
+    +'<div class="study-feedback" id="studyFeedback">Choose an answer to earn stars!</div>';
+}
+
+function answerStudy(i,choice,button){
+  if(button.parentElement.dataset.answered)return;
+  var c=studyData[i],qi=studyState.qIndex||0,q=c.quiz[qi],correct=choice===q[2];
+  button.parentElement.dataset.answered='1';
+  button.classList.add(correct?'correct':'wrong');
+  button.parentElement.querySelectorAll('.study-quiz-option').forEach(function(b,n){if(n===q[2])b.classList.add('correct');b.disabled=true});
+  var feedback=document.getElementById('studyFeedback');
+  feedback.classList.add('pop');
+  if(correct){
+    studyState.score++;studyState.currentCorrect=(studyState.currentCorrect||0)+1;studyState.streak=(studyState.streak||0)+1;
+    var praises=['✅ Correct! Your optics brain is glowing.','🌟 Nice! You nailed it.','⚡ Sharp eyes — that\'s right!','🎯 Bang on target!'];
+    feedback.textContent=praises[Math.floor(Math.random()*praises.length)]+(studyState.streak>=3?' 🔥 Streak x'+studyState.streak+'!':'');
+  }else{
+    studyState.streak=0;
+    feedback.textContent='💡 Not quite — the correct answer is '+q[1][q[2]]+'. Read the note and try the next one!';
+  }
+  if(qi<c.quiz.length-1){
+    studyState.qIndex=qi+1;
+    setTimeout(function(){renderStudyQuestion(i)},750);
+  }else{
+    studyState.done[i]=true;
+    var total=c.quiz.length,got=studyState.currentCorrect||0;
+    studyState.chapterScore[i]=got;studyState.chapterTotal[i]=total;
+    var stars=got>=total?3:(got>=Math.ceil(total*0.6)?2:1);
+    studyState.answered[i]=stars;
+    saveStudyState();
+    setTimeout(function(){
+      renderStudyHome();
+      var allDone=Object.keys(studyState.done).length===studyData.length;
+      if(allDone){launchConfetti();toast('🏆 All chapters complete! Certificate unlocked.')}
+      else toast(stars===3?'🌟 Perfect chapter! '+stars+'/3 stars':'📖 Chapter complete — '+stars+'/3 stars');
+    },800);
+  }
+}
+
+function launchConfetti(){
+  var wrap=document.createElement('div');wrap.className='confetti-burst';
+  var icons=['⭐','✨','🎉','💠','🔷'];
+  for(var k=0;k<26;k++){
+    var s=document.createElement('span');s.className='confetti-piece';s.textContent=icons[k%icons.length];
+    s.style.left=(Math.random()*100)+'%';
+    s.style.animationDuration=(1.6+Math.random()*1.2)+'s';
+    s.style.fontSize=(0.8+Math.random()*0.9)+'rem';
+    wrap.appendChild(s);
+  }
+  document.body.appendChild(wrap);
+  setTimeout(function(){wrap.remove()},3000);
+}
+
+// ---- Certification tiers ----
+function getCertTier(pct){
+  for(var t=0;t<CERT_TIERS.length;t++){if(pct>=CERT_TIERS[t].min)return CERT_TIERS[t]}
+  return CERT_TIERS[CERT_TIERS.length-1];
+}
+function showCertificate(){
+  if(Object.keys(studyState.done).length<studyData.length){toast('📚 Complete every chapter test first!');return}
+  var totalQ=0,totalCorrect=0;
+  studyData.forEach(function(_,i){totalQ+=(studyState.chapterTotal[i]||0);totalCorrect+=(studyState.chapterScore[i]||0)});
+  var pct=totalQ?Math.round(totalCorrect/totalQ*100):0;
+  var tier=getCertTier(pct);
+  var card=document.getElementById('certificateCard');
+  card.className='';card.classList.add(tier.cls);
+  card.style.display='block';
+  document.getElementById('certBadge').textContent=tier.badge;
+  document.getElementById('certTierName').textContent=tier.name;
+  document.getElementById('certificateName').textContent=document.getElementById('certNameInput').value||'Young Scientist';
+  document.getElementById('certificateCopy').textContent=tier.copy.charAt(0).toUpperCase()+tier.copy.slice(1);
+  document.getElementById('certificateStats').textContent='Score: '+totalCorrect+' / '+totalQ+' quiz answers  •  '+pct+'%  •  '+studyData.length+' chapters completed';
+  document.getElementById('certScoreFill').style.width=pct+'%';
+  document.getElementById('certBreakdown').innerHTML=studyData.map(function(c,i){
+    return '<span class="cert-chip">'+c.icon+' '+c.title+': '+(studyState.chapterScore[i]||0)+'/'+(studyState.chapterTotal[i]||0)+'</span>';
+  }).join('');
+}
+function printCertificate(){document.getElementById('certificateName').textContent=document.getElementById('certNameInput').value||'Young Scientist';window.print()}
+function closeCertificate(){document.getElementById('certificateCard').style.display='none'}
+
+// ---- Flippable book ----
+var bookPage=0,bookTurning=false;
+function buildBookPages(){
+  var pages=[];
+  pages.push({cover:true,html:'<h2>📖 OpticsVerse<br>Complete Field Journal</h2><p style="margin-top:1rem;color:#a9a9cf">A comprehensive guide to reflection, refraction, lenses, prisms, and optical instruments. Every concept explained like a real physics textbook.</p><p style="margin-top:2rem;font-size:.75rem;color:#7777a8">Flip through with the arrows below ▾</p>'});
+  // Use completeNotes for full textbook-quality content
+  if(typeof completeNotes!=='undefined'&&completeNotes.length>0){
+    completeNotes.forEach(function(notes,i){
+      pages.push({html:'<h2>'+studyData[i].icon+' Ch.'+(i+1)+' — '+studyData[i].title+'</h2>'+notes});
+    });
+  }else{
+    studyData.forEach(function(c,i){pages.push({html:'<h2>'+c.icon+' Ch.'+(i+1)+' — '+c.title+'</h2>'+c.notes})});
+  }
+  pages.push({cover:true,html:'<h2>🏆 The End</h2><p style="margin-top:1rem;color:#a9a9cf">You\'ve completed the full OpticsVerse field journal! Head back to the Chapters tab to test what you\'ve read, then collect your certificate.</p>'});
+  return pages;
+}
+function showFlipBook(){
+  document.getElementById('chapterGrid').style.display='none';
+  document.getElementById('chapterView').classList.remove('show');
+  document.getElementById('notesLibrary').classList.remove('show');
+  setActiveStudyTab('flip');
+  var wrap=document.getElementById('flipBookView');
+  wrap.classList.add('show');
+  bookPage=0;
+  renderBookPage();
+}
+function renderBookPage(){
+  var pages=buildBookPages();
+  var p=pages[bookPage];
+  var wrap=document.getElementById('flipBookView');
+  wrap.innerHTML='<div class="flipbook"><div class="flipbook-page'+(p.cover?' flipbook-cover':'')+'" id="fbPage">'+p.html+'<span class="fp-page-num">'+(bookPage+1)+' / '+pages.length+'</span></div></div>'
+    +'<div class="flipbook-nav"><button id="fbPrev" onclick="turnBook(-1)" '+(bookPage===0?'disabled':'')+'>◀ Prev</button><span class="flipbook-page-indicator">Page '+(bookPage+1)+' of '+pages.length+'</span><button id="fbNext" onclick="turnBook(1)" '+(bookPage===pages.length-1?'disabled':'')+'>Next ▶</button></div>';
+}
+function turnBook(dir){
+  var pages=buildBookPages();
+  var next=bookPage+dir;
+  if(next<0||next>=pages.length||bookTurning)return;
+  bookTurning=true;
+  var pageEl=document.getElementById('fbPage');
+  if(pageEl)pageEl.classList.add('turning');
+  setTimeout(function(){
+    bookPage=next;
+    renderBookPage();
+    bookTurning=false;
+  },280);
+}
+
+function showContextMenu(x,y){var m=document.getElementById('ctxMenu');m.style.left=x+'px';m.style.top=y+'px';m.classList.add('show')}
+
+// ===== PRESETS UI =====
+function togglePresets(){
+  var p=document.getElementById('presetPanel');
+  if(p.classList.contains('show')){p.classList.remove('show');return}
+  var html='<h3>📋 Preset Experiments</h3>';
+  PRESETS.forEach(function(pr,i){html+='<div class="pc" onclick="loadPreset('+i+')"><h4>'+pr.name+'</h4><p>'+pr.desc+'</p></div>'});
+  p.innerHTML=html;p.classList.add('show');
+}
+
+function loadPreset(idx){
+  clearAll();
+  PRESETS[idx].build();
+  document.getElementById('presetPanel').classList.remove('show');
+  // Set camera to good viewing angle
+  ST.cameraAngle=0;ST.cameraDist=16;ST.cameraHeight=6;
+  updateCamera();
+  toast('✅ Loaded: '+PRESETS[idx].name);
+}
+
+function setMode(m){
+  document.getElementById('modeSandbox').classList.toggle('active',m==='sandbox');
+}
+
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show')},2000)}
+function onResize(){ST.camera.aspect=window.innerWidth/window.innerHeight;ST.camera.updateProjectionMatrix();ST.renderer.setSize(window.innerWidth,window.innerHeight)}
+
+// ===== ANIMATION =====
+function animate(){
+  requestAnimationFrame(animate);
+  var t=ST.clock.getElapsedTime();
+  // Animate water + cosmic effects
+  ST.presetObjs.concat(ST.elements).forEach(function(o){
+    o.traverse(function(c){
+      if(c.isMesh&&c.userData.isWater&&c.geometry.attributes.position){
+        var pos=c.geometry.attributes.position;
+        for(var i=0;i<pos.count;i++){
+          var x=pos.getX(i),y=pos.getY(i);
+          pos.setZ(i,Math.sin(x*0.5+t*2)*0.12+Math.cos(y*0.3+t*1.5)*0.08);
+        }
+        pos.needsUpdate=true;c.geometry.computeVertexNormals();
+      }
+      // Robotic glow pulse on spherical objects
+      if(c.isMesh&&c.material&&c.material.opacity!==undefined&&c.geometry?.type==='SphereGeometry'){
+        var s=1+Math.sin(t*3+c.id)*0.08;
+        c.scale.setScalar(Math.max(0.8,Math.min(1.2,s)));
+      }
+      // Robotic rotation on dodecahedrons and octahedrons
+      if(c.isMesh&&(c.geometry?.type==='DodecahedronGeometry'||c.geometry?.type==='OctahedronGeometry')){
+        c.rotation.y+=0.02;c.rotation.z+=0.01;
+      }
+      // Robotic glow pulse on emissive meshes
+      if(c.isMesh&&c.material&&c.material.emissiveIntensity!==undefined&&c.material.emissive){
+        var pulse=0.25+Math.sin(t*2.5+c.id*1.7)*0.15;
+        c.material.emissiveIntensity=pulse;
+      }
+    });
+  });
+  // Galaxy star twinkling
+  if(typeof starField!=='undefined'){starField.material.opacity=0.7+Math.sin(t*1.5)*0.3;starField.rotation.y=t*0.002}
+  if(typeof colorStars!=='undefined'){colorStars.rotation.y=t*0.003;colorStars.rotation.x=Math.sin(t*0.2)*0.01}
+  // Animate asteroids and planets
+  ST.scene.traverse(function(c){
+    if(c.userData.isAsteroid){c.rotation.x+=0.003;c.rotation.y+=0.005}
+    if(c.userData.isPlanet){c.rotation.y+=0.002}
+  });
+
+  ST.renderer.render(ST.scene,ST.camera);
+}
+
+// ===== BOOT =====
+function boot(){
+  var fill=document.getElementById('ldFill'),p=0;
+  var iv=setInterval(function(){
+    p+=15;fill.style.width=Math.min(p,100)+'%';
+    if(p>=100){clearInterval(iv);init();setTimeout(function(){document.getElementById('loader').classList.add('done')},500)}
+  },200);
+}
+document.addEventListener('DOMContentLoaded',boot);
+</script>
+</body>
+</html>
